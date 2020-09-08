@@ -1,0 +1,8 @@
+﻿<Application x:Class="DotNetGB.WpfGui.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:DotNetGB.WpfGui">
+    <Application.Resources>
+         
+    </Application.Resources>
+</Application>
