@@ -17,7 +17,7 @@ namespace DotNetGB.Hardware.GpuPhases
 
         private readonly bool _gbc;
 
-        private SpritePosition?[] _sprites;
+        private SpritePosition?[] _sprites = new SpritePosition?[0];
 
         private int _droppedPixels;
 
@@ -64,18 +64,21 @@ namespace DotNetGB.Hardware.GpuPhases
         public bool Tick()
         {
             _fetcher.Tick();
+
             if (_lcdc.IsBgAndWindowDisplay || _gbc)
             {
                 if (_fifo.Length <= 8)
                 {
                     return true;
                 }
+
                 if (_droppedPixels < _r.Get(SCX) % 8)
                 {
                     _fifo.DropPixel();
                     _droppedPixels++;
                     return true;
                 }
+
                 if (!_window && _lcdc.IsWindowDisplay && _r.Get(LY) >= _r.Get(WY) && _x == _r.Get(WX) - 7)
                 {
                     _window = true;
@@ -90,14 +93,17 @@ namespace DotNetGB.Hardware.GpuPhases
                 {
                     return true;
                 }
+
                 bool spriteAdded = false;
                 for (int i = 0; i < _sprites.Length; i++)
                 {
-                    SpritePosition s = _sprites[i];
+                    var s = _sprites[i];
+
                     if (s == null)
                     {
                         continue;
                     }
+                    
                     if (_x == 0 && s.X < 8)
                     {
                         if (!spriteAdded)
@@ -116,6 +122,7 @@ namespace DotNetGB.Hardware.GpuPhases
                         }
                         _sprites[i] = null;
                     }
+                    
                     if (spriteAdded)
                     {
                         return true;
@@ -124,11 +131,8 @@ namespace DotNetGB.Hardware.GpuPhases
             }
 
             _fifo.PutPixelToScreen();
-            if (++_x == 160)
-            {
-                return false;
-            }
-            return true;
+            
+            return ++_x != 160;
         }
 
         private void StartFetchingBackground()

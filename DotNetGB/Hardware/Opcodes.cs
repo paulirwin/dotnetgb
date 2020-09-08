@@ -7,14 +7,14 @@ namespace DotNetGB.Hardware
 {
     public static class Opcodes
     {
-        public static readonly IReadOnlyList<Opcode> COMMANDS;
+        public static readonly IReadOnlyList<Opcode?> COMMANDS;
 
-        public static readonly IReadOnlyList<Opcode> EXT_COMMANDS;
+        public static readonly IReadOnlyList<Opcode?> EXT_COMMANDS;
 
         static Opcodes()
         {
-            var opcodes = new OpcodeBuilder[0x100];
-            var extOpcodes = new OpcodeBuilder[0x100];
+            var opcodes = new OpcodeBuilder?[0x100];
+            var extOpcodes = new OpcodeBuilder?[0x100];
 
             RegCmd(opcodes, 0x00, "NOP");
 
@@ -206,43 +206,29 @@ namespace DotNetGB.Hardware
                 }
             }
 
-            var commands = new List<Opcode>(0x100);
-            var extCommands = new List<Opcode>(0x100);
+            var commands = new List<Opcode?>(0x100);
+            var extCommands = new List<Opcode?>(0x100);
 
             foreach (var b in opcodes)
             {
-                if (b == null)
-                {
-                    commands.Add(null);
-                }
-                else
-                {
-                    commands.Add(b.Build());
-                }
+                commands.Add(b?.Build());
             }
 
             foreach (var b in extOpcodes)
             {
-                if (b == null)
-                {
-                    extCommands.Add(null);
-                }
-                else
-                {
-                    extCommands.Add(b.Build());
-                }
+                extCommands.Add(b?.Build());
             }
 
             COMMANDS = commands.ToImmutableList();
             EXT_COMMANDS = extCommands.ToImmutableList();
         }
 
-        private static OpcodeBuilder RegLoad(OpcodeBuilder[] commands, int opcode, string target, string source)
+        private static OpcodeBuilder RegLoad(OpcodeBuilder?[] commands, int opcode, string target, string source)
         {
             return RegCmd(commands, opcode, $"LD {target},{source}").CopyByte(target, source);
         }
 
-        private static OpcodeBuilder RegCmd(OpcodeBuilder[] commands, int opcode, string label)
+        private static OpcodeBuilder RegCmd(OpcodeBuilder?[] commands, int opcode, string label)
         {
             if (commands[opcode] != null)
             {
@@ -253,7 +239,7 @@ namespace DotNetGB.Hardware
             return builder;
         }
 
-        private static OpcodeBuilder RegCmd(OpcodeBuilder[] commands, KeyValuePair<int, string> opcode, string label)
+        private static OpcodeBuilder RegCmd(OpcodeBuilder?[] commands, KeyValuePair<int, string> opcode, string label)
         {
             return RegCmd(commands, opcode.Key, label.Replace("{}", opcode.Value));
         }

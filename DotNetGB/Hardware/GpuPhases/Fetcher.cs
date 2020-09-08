@@ -48,7 +48,7 @@ namespace DotNetGB.Hardware.GpuPhases
 
         private int _tileId;
 
-        private TileAttributes _tileAttributes;
+        private TileAttributes _tileAttributes = TileAttributes.EMPTY;
 
         private int _tileData1;
 
@@ -56,9 +56,9 @@ namespace DotNetGB.Hardware.GpuPhases
 
         private int _spriteTileLine;
 
-        private SpritePosition _sprite;
+        private SpritePosition? _sprite;
 
-        private TileAttributes _spriteAttributes;
+        private TileAttributes? _spriteAttributes;
 
         private int _spriteOffset;
 
@@ -141,14 +141,9 @@ namespace DotNetGB.Hardware.GpuPhases
             {
                 case State.READ_TILE_ID:
                     _tileId = _videoRam0[_mapAddress + _xOffset];
-                    if (_gbc)
-                    {
-                        _tileAttributes = TileAttributes.ValueOf(_videoRam1[_mapAddress + _xOffset]);
-                    }
-                    else
-                    {
-                        _tileAttributes = TileAttributes.EMPTY;
-                    }
+                    _tileAttributes = _gbc 
+                        ? TileAttributes.ValueOf(_videoRam1[_mapAddress + _xOffset]) 
+                        : TileAttributes.EMPTY;
                     _state = State.READ_DATA_1;
                     break;
 

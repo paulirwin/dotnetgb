@@ -1,16 +1,13 @@
 ﻿using System;
-using System.ComponentModel;
-using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using DotNetGB.Hardware;
-using DotNetGB.WpfGui.Annotations;
 
 namespace DotNetGB.WpfGui
 {
-    public partial class MainWindow : Window, IDisplay, INotifyPropertyChanged
+    public partial class MainWindow : IDisplay
     {
         public const int DISPLAY_WIDTH = 160;
 
@@ -168,18 +165,10 @@ namespace DotNetGB.WpfGui
         private void DrawImage()
         {
             Display.Lock();
-            
+
             Display.WritePixels(_rect, _pixels, STRIDE, 0);
-            
+
             Display.Unlock();
-        }
-
-        public event PropertyChangedEventHandler PropertyChanged;
-
-        [NotifyPropertyChangedInvocator]
-        protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
-        {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
     }
 }

@@ -23,8 +23,6 @@ namespace DotNetGB.Hardware
             HALTED
         }
 
-        private readonly Registers _registers;
-
         private readonly IAddressSpace _addressSpace;
 
         private readonly InterruptManager _interruptManager;
@@ -37,11 +35,11 @@ namespace DotNetGB.Hardware
 
         private int _opcode1, _opcode2;
 
-        private int[] _operand = new int[2];
+        private readonly int[] _operand = new int[2];
 
-        private Opcode _currentOpcode;
+        private Opcode? _currentOpcode;
 
-        private IReadOnlyList<IOp> _ops;
+        private IReadOnlyList<IOp>? _ops;
 
         private int _operandIndex;
 
@@ -57,13 +55,13 @@ namespace DotNetGB.Hardware
 
         private InterruptManager.InterruptType? _requestedIrq;
 
-        private int _clockCycle = 0;
+        private int _clockCycle;
 
         private bool _haltBugMode;
 
         public Cpu(IAddressSpace addressSpace, InterruptManager interruptManager, Gpu gpu, IDisplay display, SpeedMode speedMode)
         {
-            _registers = new Registers();
+            Registers = new Registers();
             _addressSpace = addressSpace;
             _interruptManager = interruptManager;
             _gpu = gpu;
@@ -114,7 +112,7 @@ namespace DotNetGB.Hardware
             bool accessedMemory = false;
             while (true)
             {
-                int pc = _registers.PC;
+                int pc = Registers.PC;
                 switch (_state)
                 {
                     case CpuState.OPCODE:
@@ -142,7 +140,7 @@ namespace DotNetGB.Hardware
 
                         if (!_haltBugMode)
                         {
-                            _registers.IncrementPC();
+                            Registers.IncrementPC();
                         }
                         else
                         {
@@ -170,10 +168,15 @@ namespace DotNetGB.Hardware
                         }
 
                         _state = CpuState.OPERAND;
-                        _registers.IncrementPC();
+                        Registers.IncrementPC();
                         break;
 
                     case CpuState.OPERAND:
+                        if (_currentOpcode == null)
+                        {
+                            throw new InvalidOperationException("Operand with null opcode");
+                        }
+
                         while (_operandIndex < _currentOpcode.OperandLength)
                         {
                             if (accessedMemory)
@@ -183,7 +186,7 @@ namespace DotNetGB.Hardware
 
                             accessedMemory = true;
                             _operand[_operandIndex++] = _addressSpace[pc];
-                            _registers.IncrementPC();
+                            Registers.IncrementPC();
                         }
 
                         _ops = _currentOpcode.Ops;
@@ -231,16 +234,16 @@ namespace DotNetGB.Hardware
 
                             _opIndex++;
 
-                            SpriteBug.CorruptionType? corruptionType = op.CausesOemBug(_registers, _opContext);
+                            SpriteBug.CorruptionType? corruptionType = op.CausesOemBug(Registers, _opContext);
                             if (corruptionType != null)
                             {
                                 HandleSpriteBug(corruptionType.Value);
                             }
 
-                            _opContext = op.Execute(_registers, _addressSpace, _operand, _opContext);
+                            _opContext = op.Execute(Registers, _addressSpace, _operand, _opContext);
                             op.SwitchInterrupts(_interruptManager);
 
-                            if (!op.Proceed(_registers))
+                            if (!op.Proceed(Registers))
                             {
                                 _opIndex = _ops.Count;
                                 break;
@@ -308,19 +311,19 @@ namespace DotNetGB.Hardware
                     break;
 
                 case CpuState.IRQ_PUSH_1:
-                    _registers.DecrementSP();
-                    _addressSpace[_registers.SP] = (_registers.PC & 0xff00) >> 8;
+                    Registers.DecrementSP();
+                    _addressSpace[Registers.SP] = (Registers.PC & 0xff00) >> 8;
                     _state = CpuState.IRQ_PUSH_2;
                     break;
 
                 case CpuState.IRQ_PUSH_2:
-                    _registers.DecrementSP();
-                    _addressSpace[_registers.SP] = _registers.PC & 0x00ff;
+                    Registers.DecrementSP();
+                    _addressSpace[Registers.SP] = Registers.PC & 0x00ff;
                     _state = CpuState.IRQ_JUMP;
                     break;
 
                 case CpuState.IRQ_JUMP:
-                    _registers.PC = (int)_requestedIrq.GetValueOrDefault();
+                    Registers.PC = (int)_requestedIrq.GetValueOrDefault();
                     _requestedIrq = null;
                     _state = CpuState.OPCODE;
                     break;
@@ -340,7 +343,7 @@ namespace DotNetGB.Hardware
             }
         }
 
-        public Registers Registers => _registers;
+        public Registers Registers { get; }
 
         private void ClearState()
         {

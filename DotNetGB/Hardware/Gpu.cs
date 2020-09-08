@@ -13,10 +13,6 @@ namespace DotNetGB.Hardware
             HBlank, VBlank, OamSearch, PixelTransfer
         }
 
-        private readonly IAddressSpace _videoRam0;
-
-        private readonly IAddressSpace? _videoRam1;
-
         private readonly IAddressSpace _oamRam;
 
         private readonly IDisplay _display;
@@ -24,13 +20,7 @@ namespace DotNetGB.Hardware
         private readonly InterruptManager _interruptManager;
 
         private readonly Dma _dma;
-
-        private readonly Lcdc _lcdc;
-
-        private readonly bool _gbc;
-
-        private readonly ColorPalette _bgPalette;
-
+        
         private readonly ColorPalette _oamPalette;
 
         private readonly HBlankPhase _hBlankPhase;
@@ -41,46 +31,32 @@ namespace DotNetGB.Hardware
 
         private readonly VBlankPhase _vBlankPhase;
 
-        private bool _lcdEnabled = true;
-
         private int _lcdEnabledDelay;
-
-        private MemoryRegisters _r;
-
-        private int _ticksInLine;
-
-        private GpuMode _mode;
 
         private IGpuPhase _phase;
 
-        public Gpu(IDisplay display, InterruptManager interruptManager, Dma dma, Ram oamRam, bool gbc)
+        public Gpu(IDisplay display, InterruptManager interruptManager, Dma dma, IAddressSpace oamRam, bool gbc)
         {
-            _r = new MemoryRegisters(GpuRegister.Values.Cast<MemoryRegisters.IRegister>());
-            _lcdc = new Lcdc();
+            Registers = new MemoryRegisters(GpuRegister.Values.Cast<MemoryRegisters.IRegister>());
+            Lcdc = new Lcdc();
             _interruptManager = interruptManager;
-            _gbc = gbc;
-            _videoRam0 = new Ram(0x8000, 0x2000);
-            if (gbc)
-            {
-                _videoRam1 = new Ram(0x8000, 0x2000);
-            }
-            else
-            {
-                _videoRam1 = null;
-            }
+            IsGbc = gbc;
+            VideoRam0 = new Ram(0x8000, 0x2000);
+            VideoRam1 = gbc ? new Ram(0x8000, 0x2000) : null;
+
             _oamRam = oamRam;
             _dma = dma;
 
-            _bgPalette = new ColorPalette(0xff68);
+            BgPalette = new ColorPalette(0xff68);
             _oamPalette = new ColorPalette(0xff6a);
             _oamPalette.FillWithFF();
 
-            _oamSearchPhase = new OamSearch(oamRam, _lcdc, _r);
-            _pixelTransferPhase = new PixelTransfer(_videoRam0, _videoRam1, oamRam, display, _lcdc, _r, gbc, _bgPalette, _oamPalette);
+            _oamSearchPhase = new OamSearch(oamRam, Lcdc, Registers);
+            _pixelTransferPhase = new PixelTransfer(VideoRam0, VideoRam1, oamRam, display, Lcdc, Registers, gbc, BgPalette, _oamPalette);
             _hBlankPhase = new HBlankPhase();
             _vBlankPhase = new VBlankPhase();
 
-            _mode = GpuMode.OamSearch;
+            Mode = GpuMode.OamSearch;
             _phase = _oamSearchPhase.Start();
 
             _display = display;
@@ -88,54 +64,55 @@ namespace DotNetGB.Hardware
 
         private IAddressSpace? GetAddressSpace(int address)
         {
-            if (_videoRam0.Accepts(address)/* && mode != Mode.PixelTransfer*/)
+            if (VideoRam0.Accepts(address)/* && mode != Mode.PixelTransfer*/)
             {
                 return VideoRam;
             }
-            else if (_oamRam.Accepts(address) && !_dma.IsOamBlocked /* && mode != Mode.OamSearch && mode != Mode.PixelTransfer*/)
+
+            if (_oamRam.Accepts(address) && !_dma.IsOamBlocked /* && mode != Mode.OamSearch && mode != Mode.PixelTransfer*/)
             {
                 return _oamRam;
             }
-            else if (_lcdc.Accepts(address))
+
+            if (Lcdc.Accepts(address))
             {
-                return _lcdc;
+                return Lcdc;
             }
-            else if (_r.Accepts(address))
+
+            if (Registers.Accepts(address))
             {
-                return _r;
+                return Registers;
             }
-            else if (_gbc && _bgPalette.Accepts(address))
+
+            if (IsGbc && BgPalette.Accepts(address))
             {
-                return _bgPalette;
+                return BgPalette;
             }
-            else if (_gbc && _oamPalette.Accepts(address))
+
+            if (IsGbc && _oamPalette.Accepts(address))
             {
                 return _oamPalette;
             }
-            else
-            {
-                return null;
-            }
+
+            return null;
         }
 
-        private IAddressSpace VideoRam
+        private IAddressSpace? VideoRam
         {
             get
             {
-                if (_gbc && (_r.Get(VBK) & 1) == 1)
+                if (IsGbc && (Registers.Get(VBK) & 1) == 1)
                 {
-                    return _videoRam1;
+                    return VideoRam1;
                 }
-                else
-                {
-                    return _videoRam0;
-                }
+
+                return VideoRam0;
             }
         }
 
-        public IAddressSpace VideoRam0 => _videoRam0;
+        public IAddressSpace VideoRam0 { get; }
 
-        public IAddressSpace? VideoRam1 => _videoRam1;
+        public IAddressSpace? VideoRam1 { get; }
 
         public bool Accepts(int address) => GetAddressSpace(address) != null;
 
@@ -147,22 +124,20 @@ namespace DotNetGB.Hardware
                 {
                     return Stat;
                 }
-                else
+
+                var space = GetAddressSpace(address);
+                
+                if (space == null)
                 {
-                    var space = GetAddressSpace(address);
-                    if (space == null)
-                    {
-                        return 0xff;
-                    }
-                    else if (address == VBK.Address)
-                    {
-                        return _gbc ? 0xfe : 0xff;
-                    }
-                    else
-                    {
-                        return space[address];
-                    }
+                    return 0xff;
                 }
+
+                if (address == VBK.Address)
+                {
+                    return IsGbc ? 0xfe : 0xff;
+                }
+
+                return space[address];
             }
             set
             {
@@ -173,7 +148,8 @@ namespace DotNetGB.Hardware
                 else
                 {
                     var space = GetAddressSpace(address);
-                    if (space == _lcdc)
+
+                    if (space == Lcdc)
                     {
                         SetLcdc(value);
                     }
@@ -187,30 +163,30 @@ namespace DotNetGB.Hardware
 
         public GpuMode? Tick()
         {
-            if (!_lcdEnabled)
+            if (!IsLcdEnabled)
             {
                 if (_lcdEnabledDelay != -1)
                 {
                     if (--_lcdEnabledDelay == 0)
                     {
                         _display.EnableLcd();
-                        _lcdEnabled = true;
+                        IsLcdEnabled = true;
                     }
                 }
             }
-            if (!_lcdEnabled)
+            if (!IsLcdEnabled)
             {
                 return null;
             }
 
-            GpuMode oldMode = _mode;
-            _ticksInLine++;
+            var oldMode = Mode;
+            TicksInLine++;
             if (_phase.Tick())
             {
                 // switch line 153 to 0
-                if (_ticksInLine == 4 && _mode == GpuMode.VBlank && _r.Get(LY) == 153)
+                if (TicksInLine == 4 && Mode == GpuMode.VBlank && Registers.Get(LY) == 153)
                 {
-                    _r.Put(LY, 0);
+                    Registers.Put(LY, 0);
                     RequestLycEqualsLyInterrupt();
                 }
             }
@@ -219,28 +195,28 @@ namespace DotNetGB.Hardware
                 switch (oldMode)
                 {
                     case GpuMode.OamSearch:
-                        _mode = GpuMode.PixelTransfer;
+                        Mode = GpuMode.PixelTransfer;
                         _phase = _pixelTransferPhase.Start(_oamSearchPhase.Sprites);
                         break;
 
                     case GpuMode.PixelTransfer:
-                        _mode = GpuMode.HBlank;
-                        _phase = _hBlankPhase.Start(_ticksInLine);
+                        Mode = GpuMode.HBlank;
+                        _phase = _hBlankPhase.Start(TicksInLine);
                         RequestLcdcInterrupt(3);
                         break;
 
                     case GpuMode.HBlank:
-                        _ticksInLine = 0;
-                        if (_r.PreIncrement(LY) == 144)
+                        TicksInLine = 0;
+                        if (Registers.PreIncrement(LY) == 144)
                         {
-                            _mode = GpuMode.VBlank;
+                            Mode = GpuMode.VBlank;
                             _phase = _vBlankPhase.Start();
                             _interruptManager.RequestInterrupt(InterruptType.VBlank);
                             RequestLcdcInterrupt(4);
                         }
                         else
                         {
-                            _mode = GpuMode.OamSearch;
+                            Mode = GpuMode.OamSearch;
                             _phase = _oamSearchPhase.Start();
                         }
                         RequestLcdcInterrupt(5);
@@ -248,11 +224,11 @@ namespace DotNetGB.Hardware
                         break;
 
                     case GpuMode.VBlank:
-                        _ticksInLine = 0;
-                        if (_r.PreIncrement(LY) == 1)
+                        TicksInLine = 0;
+                        if (Registers.PreIncrement(LY) == 1)
                         {
-                            _mode = GpuMode.OamSearch;
-                            _r.Put(LY, 0);
+                            Mode = GpuMode.OamSearch;
+                            Registers.Put(LY, 0);
                             _phase = _oamSearchPhase.Start();
                             RequestLcdcInterrupt(5);
                         }
@@ -264,21 +240,20 @@ namespace DotNetGB.Hardware
                         break;
                 }
             }
-            if (oldMode == _mode)
+
+            if (oldMode == Mode)
             {
                 return null;
             }
-            else
-            {
-                return _mode;
-            }
+
+            return Mode;
         }
 
-        public int TicksInLine => _ticksInLine;
+        public int TicksInLine { get; private set; }
 
         private void RequestLcdcInterrupt(int statBit)
         {
-            if ((_r.Get(STAT) & (1 << statBit)) != 0)
+            if ((Registers.Get(STAT) & (1 << statBit)) != 0)
             {
                 _interruptManager.RequestInterrupt(InterruptType.LCDC);
             }
@@ -286,7 +261,7 @@ namespace DotNetGB.Hardware
 
         private void RequestLycEqualsLyInterrupt()
         {
-            if (_r.Get(LYC) == _r.Get(LY))
+            if (Registers.Get(LYC) == Registers.Get(LY))
             {
                 RequestLcdcInterrupt(6);
             }
@@ -294,13 +269,13 @@ namespace DotNetGB.Hardware
 
         public int Stat
         {
-            get => _r.Get(STAT) | _mode.Ordinal() | (_r.Get(LYC) == _r.Get(LY) ? (1 << 2) : 0) | 0x80;
-            set => _r.Put(STAT, value & 0b11111000); // last three bits are read-only
+            get => Registers.Get(STAT) | Mode.Ordinal() | (Registers.Get(LYC) == Registers.Get(LY) ? (1 << 2) : 0) | 0x80;
+            set => Registers.Put(STAT, value & 0b11111000); // last three bits are read-only
         }
 
         private void SetLcdc(int value)
         {
-            _lcdc.Value = value;
+            Lcdc.Value = value;
             if ((value & (1 << 7)) == 0)
             {
                 DisableLcd();
@@ -313,11 +288,11 @@ namespace DotNetGB.Hardware
 
         private void DisableLcd()
         {
-            _r.Put(LY, 0);
-            _ticksInLine = 0;
+            Registers.Put(LY, 0);
+            TicksInLine = 0;
             _phase = _hBlankPhase.Start(250);
-            _mode = GpuMode.HBlank;
-            _lcdEnabled = false;
+            Mode = GpuMode.HBlank;
+            IsLcdEnabled = false;
             _lcdEnabledDelay = -1;
             _display.DisableLcd();
         }
@@ -327,19 +302,16 @@ namespace DotNetGB.Hardware
             _lcdEnabledDelay = 244;
         }
 
-        public bool IsLcdEnabled => _lcdEnabled;
+        public bool IsLcdEnabled { get; private set; } = true;
 
-        public Lcdc Lcdc
-        {
-            get => _lcdc;
-        }
+        public Lcdc Lcdc { get; }
 
-        public MemoryRegisters Registers => _r;
+        public MemoryRegisters Registers { get; }
 
-        public bool IsGbc => _gbc;
+        public bool IsGbc { get; }
 
-        public ColorPalette BgPalette => _bgPalette;
+        public ColorPalette BgPalette { get; }
 
-        public GpuMode Mode => _mode;
+        public GpuMode Mode { get; private set; }
     }
 }

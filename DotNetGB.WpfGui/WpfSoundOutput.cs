@@ -40,7 +40,7 @@ namespace DotNetGB.WpfGui
             _player.Stop();
         }
 
-        public void Play(int left, int right)
+        public void Play(byte left, byte right)
         {
             if (_tick++ != 0)
             {
@@ -48,8 +48,8 @@ namespace DotNetGB.WpfGui
                 return;
             }
 
-            _buffer[_i++] = (byte) left;
-            _buffer[_i++] = (byte) right;
+            _buffer[_i++] = left;
+            _buffer[_i++] = right;
 
             if (_i >= BUFFER_SIZE)
             {

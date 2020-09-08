@@ -6,7 +6,7 @@
 
         void Stop();
 
-        void Play(int left, int right);
+        void Play(byte left, byte right);
     }
 
     public sealed class NullSoundOutput : ISoundOutput
@@ -19,7 +19,7 @@
         {
         }
 
-        public void Play(int left, int right)
+        public void Play(byte left, byte right)
         {
         }
     }

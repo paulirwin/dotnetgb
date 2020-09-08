@@ -12,8 +12,6 @@ namespace DotNetGB
     {
         public const int TICKS_PER_SEC = 4_194_304;
 
-        private readonly InterruptManager _interruptManager;
-
         private readonly Gpu _gpu;
 
         private readonly Mmu _mmu;
@@ -30,7 +28,7 @@ namespace DotNetGB
 
         private readonly Sound _sound;
 
-        private readonly SerialPort _serialPort;
+        //private readonly SerialPort _serialPort;
 
         private readonly bool _gbc;
 
@@ -52,20 +50,20 @@ namespace DotNetGB
             _display = display;
             _gbc = rom.IsGbc;
             _speedMode = new SpeedMode();
-            _interruptManager = new InterruptManager(_gbc);
-            _timer = new Timer(_interruptManager, _speedMode);
+            InterruptManager interruptManager = new InterruptManager(_gbc);
+            _timer = new Timer(interruptManager, _speedMode);
             _mmu = new Mmu();
 
             Ram oamRam = new Ram(0xfe00, 0x00a0);
             _dma = new Dma(_mmu, oamRam, _speedMode);
-            _gpu = new Gpu(display, _interruptManager, _dma, oamRam, _gbc);
+            _gpu = new Gpu(display, interruptManager, _dma, oamRam, _gbc);
             _hdma = new Hdma(_mmu);
             _sound = new Sound(soundOutput, _gbc);
             //_serialPort = new SerialPort(_interruptManager, serialEndpoint, _speedMode);
             _mmu.AddAddressSpace(rom);
             _mmu.AddAddressSpace(_gpu);
-            _mmu.AddAddressSpace(new Joypad(_interruptManager, controller));
-            _mmu.AddAddressSpace(_interruptManager);
+            _mmu.AddAddressSpace(new Joypad(interruptManager, controller));
+            _mmu.AddAddressSpace(interruptManager);
             //_mmu.AddAddressSpace(_serialPort);
             _mmu.AddAddressSpace(_timer);
             _mmu.AddAddressSpace(_dma);
@@ -86,9 +84,9 @@ namespace DotNetGB
             _mmu.AddAddressSpace(new Ram(0xff80, 0x7f));
             _mmu.AddAddressSpace(new ShadowAddressSpace(_mmu, 0xe000, 0xc000, 0x1e00));
 
-            _cpu = new Cpu(_mmu, _interruptManager, _gpu, display, _speedMode);
+            _cpu = new Cpu(_mmu, interruptManager, _gpu, display, _speedMode);
 
-            _interruptManager.DisableInterrupts(false);
+            interruptManager.DisableInterrupts(false);
             if (!options.UseBootstrap)
             {
                 InitRegs();
