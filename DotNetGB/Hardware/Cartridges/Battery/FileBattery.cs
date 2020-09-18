@@ -24,53 +24,50 @@ namespace DotNetGB.Hardware.Cartridges.Battery
             }
 
             long saveLength = _saveFile.Length;
-            saveLength = saveLength - (saveLength % 0x2000);
-            using (var inputStream = _saveFile.OpenRead())
+            saveLength -= (saveLength % 0x2000);
+            
+            using var inputStream = _saveFile.OpenRead();
+
+            LoadRam(ram, inputStream, saveLength);
+            if (clockData != null)
             {
-                LoadRam(ram, inputStream, saveLength);
-                if (clockData != null)
-                {
-                    LoadClock(clockData, inputStream);
-                }
+                LoadClock(clockData, inputStream);
             }
         }
 
         public void SaveRamWithClock(int[] ram, long[]? clockData)
         {
-            using (var os = _saveFile.OpenWrite())
+            using var os = _saveFile.OpenWrite();
+
+            SaveRam(ram, os);
+            if (clockData != null)
             {
-                SaveRam(ram, os);
-                if (clockData != null)
-                {
-                    SaveClock(clockData, os);
-                }
+                SaveClock(clockData, os);
             }
         }
 
-        private void LoadClock(long[] clockData, Stream inputStream)
+        private static void LoadClock(long[] clockData, Stream inputStream)
         {
-            using (var binReader = new BinaryReader(inputStream))
+            using var binReader = new BinaryReader(inputStream);
+
+            int i = 0;
+            while (binReader.BaseStream.Position != binReader.BaseStream.Length)
             {
-                int i = 0;
-                while (binReader.BaseStream.Position != binReader.BaseStream.Length)
-                {
-                    clockData[i++] = binReader.ReadInt32() & 0xffffffff;
-                }
+                clockData[i++] = binReader.ReadInt32() & 0xffffffff;
             }
         }
 
-        private void SaveClock(long[] clockData, Stream os)
+        private static void SaveClock(long[] clockData, Stream os)
         {
-            using (var binWriter = new BinaryWriter(os))
+            using var binWriter = new BinaryWriter(os);
+
+            foreach (long d in clockData)
             {
-                foreach (long d in clockData)
-                {
-                    binWriter.Write((int) d);
-                }
+                binWriter.Write((int) d);
             }
         }
 
-        private void LoadRam(int[] ram, Stream inputStream, long length)
+        private static void LoadRam(int[] ram, Stream inputStream, long length)
         {
             byte[] buffer = new byte[ram.Length];
             inputStream.Read(buffer, 0, Math.Min((int) length, ram.Length));
@@ -80,7 +77,7 @@ namespace DotNetGB.Hardware.Cartridges.Battery
             }
         }
 
-        private void SaveRam(int[] ram, Stream os)
+        private static void SaveRam(int[] ram, Stream os)
         {
             byte[] buffer = new byte[ram.Length];
             for (int i = 0; i < ram.Length; i++)

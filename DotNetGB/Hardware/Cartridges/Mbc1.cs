@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Diagnostics;
 using DotNetGB.Hardware.Cartridges.Battery;
 
 namespace DotNetGB.Hardware.Cartridges
@@ -11,8 +10,6 @@ namespace DotNetGB.Hardware.Cartridges
             0x00, 0x08, 0x11, 0x1F, 0x88, 0x89, 0x00, 0x0E, 0xDC, 0xCC, 0x6E, 0xE6, 0xDD, 0xDD, 0xD9, 0x99,
             0xBB, 0xBB, 0x67, 0x63, 0x6E, 0x0E, 0xEC, 0xCC, 0xDD, 0xDC, 0x99, 0x9F, 0xBB, 0xB9, 0x33, 0x3E
         };
-
-        private readonly CartridgeType _type;
 
         private readonly int _romBanks;
 
@@ -38,7 +35,7 @@ namespace DotNetGB.Hardware.Cartridges
 
         private int _cachedRomBankFor0x4000 = -1;
 
-        public Mbc1(int[] cartridge, CartridgeType type, IBattery battery, int romBanks, int ramBanks)
+        public Mbc1(int[] cartridge, IBattery battery, int romBanks, int ramBanks)
         {
             _multicart = romBanks == 64 && IsMulticart(cartridge);
             _cartridge = cartridge;
@@ -49,7 +46,7 @@ namespace DotNetGB.Hardware.Cartridges
             {
                 _ram[i] = 0xff;
             }
-            _type = type;
+
             _battery = battery;
             battery.LoadRam(_ram);
         }
@@ -65,11 +62,13 @@ namespace DotNetGB.Hardware.Cartridges
                 {
                     return GetRomByte(GetRomBankFor0x0000(), address);
                 }
-                else if (address >= 0x4000 && address < 0x8000)
+
+                if (address >= 0x4000 && address < 0x8000)
                 {
                     return GetRomByte(GetRomBankFor0x4000(), address - 0x4000);
                 }
-                else if (address >= 0xa000 && address < 0xc000)
+
+                if (address >= 0xa000 && address < 0xc000)
                 {
                     if (_ramWriteEnabled)
                     {
@@ -78,20 +77,14 @@ namespace DotNetGB.Hardware.Cartridges
                         {
                             return _ram[ramAddress];
                         }
-                        else
-                        {
-                            return 0xff;
-                        }
-                    }
-                    else
-                    {
+
                         return 0xff;
                     }
+
+                    return 0xff;
                 }
-                else
-                {
-                    throw new ArgumentOutOfRangeException(address.ToString("x2"));
-                }
+
+                throw new ArgumentOutOfRangeException(address.ToString("x2"));
             }
             set
             {
@@ -108,7 +101,7 @@ namespace DotNetGB.Hardware.Cartridges
                 {
                     //Trace.WriteLine($"Low 5 bits of ROM bank: {(value & 0b00011111)}");
                     int bank = _selectedRomBank & 0b01100000;
-                    bank = bank | (value & 0b00011111);
+                    bank |= (value & 0b00011111);
                     SelectRomBank(bank);
                     _cachedRomBankFor0x0000 = _cachedRomBankFor0x4000 = -1;
                 }
@@ -116,7 +109,7 @@ namespace DotNetGB.Hardware.Cartridges
                 {
                     //Trace.WriteLine($"High 2 bits of ROM bank: {((value & 0b11) << 5)}");
                     int bank = _selectedRomBank & 0b00011111;
-                    bank = bank | ((value & 0b11) << 5);
+                    bank |= ((value & 0b11) << 5);
                     SelectRomBank(bank);
                     _cachedRomBankFor0x0000 = _cachedRomBankFor0x4000 = -1;
                 }
@@ -203,10 +196,8 @@ namespace DotNetGB.Hardware.Cartridges
             {
                 return _cartridge[cartOffset];
             }
-            else
-            {
-                return 0xff;
-            }
+
+            return 0xff;
         }
 
         private int GetRamAddress(int address)
@@ -215,10 +206,8 @@ namespace DotNetGB.Hardware.Cartridges
             {
                 return address - 0xa000;
             }
-            else
-            {
-                return (_selectedRamBank % _ramBanks) * 0x2000 + (address - 0xa000);
-            }
+
+            return (_selectedRamBank % _ramBanks) * 0x2000 + (address - 0xa000);
         }
 
         private static bool IsMulticart(int[] rom)

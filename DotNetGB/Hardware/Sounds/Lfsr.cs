@@ -22,11 +22,11 @@
         public int NextBit(bool widthMode7)
         {
             bool x = ((lfsr & 1) ^ ((lfsr & 2) >> 1)) != 0;
-            lfsr = lfsr >> 1;
-            lfsr = lfsr | (x ? (1 << 14) : 0);
+            lfsr >>= 1;
+            lfsr |= (x ? (1 << 14) : 0);
             if (widthMode7)
             {
-                lfsr = lfsr | (x ? (1 << 6) : 0);
+                lfsr |= (x ? (1 << 6) : 0);
             }
             return 1 & ~lfsr;
         }

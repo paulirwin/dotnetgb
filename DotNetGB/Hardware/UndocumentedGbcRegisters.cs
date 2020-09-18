@@ -4,7 +4,7 @@ namespace DotNetGB.Hardware
 {
     public class UndocumentedGbcRegisters : IAddressSpace
     {
-        private Ram _ram = new Ram(0xff72, 6);
+        private readonly Ram _ram = new Ram(0xff72, 6);
 
         private int _xff6c;
 
@@ -25,14 +25,13 @@ namespace DotNetGB.Hardware
                 {
                     return _xff6c;
                 }
-                else if (_ram.Accepts(address))
+
+                if (_ram.Accepts(address))
                 {
                     return _ram[address];
                 }
-                else
-                {
-                    throw new ArgumentOutOfRangeException();
-                }
+
+                throw new ArgumentOutOfRangeException();
             }
             set
             {

@@ -10,12 +10,12 @@ namespace DotNetGB.Hardware.Sounds
 
         private int i;
 
-        private VolumeEnvelope volumeEnvelope;
+        private readonly VolumeEnvelope volumeEnvelope;
 
         public SoundMode2(bool gbc)
             : base(0xff15, 64, gbc)
         {
-            this.volumeEnvelope = new VolumeEnvelope();
+            volumeEnvelope = new VolumeEnvelope();
         }
 
         public override void Start()
@@ -31,7 +31,7 @@ namespace DotNetGB.Hardware.Sounds
 
         protected override void Trigger()
         {
-            this.i = 0;
+            i = 0;
             freqDivider = 1;
             volumeEnvelope.Trigger();
         }
@@ -82,19 +82,14 @@ namespace DotNetGB.Hardware.Sounds
         {
             get
             {
-                switch (Nr1 >> 6)
+                return (Nr1 >> 6) switch
                 {
-                    case 0:
-                        return 0b00000001;
-                    case 1:
-                        return 0b10000001;
-                    case 2:
-                        return 0b10000111;
-                    case 3:
-                        return 0b01111110;
-                    default:
-                        throw new InvalidOperationException();
-                }
+                    0 => 0b00000001,
+                    1 => 0b10000001,
+                    2 => 0b10000111,
+                    3 => 0b01111110,
+                    _ => throw new InvalidOperationException()
+                };
             }
         }
 

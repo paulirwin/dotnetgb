@@ -14,7 +14,7 @@ namespace DotNetGB.Tests.GpuTests
         {
             var r = new MemoryRegisters(GpuRegister.Values.OfType<MemoryRegisters.IRegister>());
             r.Put(GpuRegister.BGP, 0b11100100);
-            fifo = new DmgPixelFifo(new NullDisplay(), new Lcdc(), r);
+            fifo = new DmgPixelFifo(new NullDisplay(), r);
         }
 
         [Fact]

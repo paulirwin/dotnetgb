@@ -39,7 +39,7 @@ namespace DotNetGB.Hardware
                 {
                     sb = serialEndpoint.Transfer(sb);
                 }
-                catch (Exception e)
+                catch
                 {
                     //LOG.error("Can't transfer byte", e);
                     sb = 0;
@@ -55,18 +55,12 @@ namespace DotNetGB.Hardware
         {
             get
             {
-                if (address == 0xff01)
+                return address switch
                 {
-                    return sb;
-                }
-                else if (address == 0xff02)
-                {
-                    return sc | 0b01111110;
-                }
-                else
-                {
-                    throw new ArgumentException();
-                }
+                    0xff01 => sb,
+                    0xff02 => sc | 0b01111110,
+                    _ => throw new ArgumentException()
+                };
             }
             set
             {

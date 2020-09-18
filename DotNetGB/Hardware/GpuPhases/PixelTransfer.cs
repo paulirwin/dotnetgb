@@ -9,8 +9,6 @@ namespace DotNetGB.Hardware.GpuPhases
 
         private readonly Fetcher _fetcher;
 
-        private readonly IDisplay _display;
-
         private readonly MemoryRegisters _r;
 
         private readonly Lcdc _lcdc;
@@ -36,10 +34,9 @@ namespace DotNetGB.Hardware.GpuPhases
             }
             else
             {
-                _fifo = new DmgPixelFifo(display, lcdc, r);
+                _fifo = new DmgPixelFifo(display, r);
             }
             _fetcher = new Fetcher(_fifo, videoRam0, videoRam1, oemRam, lcdc, r, gbc);
-            _display = display;
         }
 
         public PixelTransfer Start(SpritePosition?[] sprites)

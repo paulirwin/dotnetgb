@@ -6,8 +6,8 @@ namespace DotNetGB.WpfGui
 {
     public class WpfController : IController
     {
-        public event EventHandler<Button> OnButtonPress;
-        public event EventHandler<Button> OnButtonRelease;
+        public event EventHandler<Button>? OnButtonPress;
+        public event EventHandler<Button>? OnButtonRelease;
 
         public void ButtonPressed(Key key)
         {
@@ -31,27 +31,18 @@ namespace DotNetGB.WpfGui
 
         private static Button? Translate(Key key)
         {
-            switch (key)
+            return key switch
             {
-                case Key.Left:
-                    return Button.LEFT;
-                case Key.Right:
-                    return Button.RIGHT;
-                case Key.Up:
-                    return Button.UP;
-                case Key.Down:
-                    return Button.DOWN;
-                case Key.Z:
-                    return Button.A;
-                case Key.X:
-                    return Button.B;
-                case Key.Enter:
-                    return Button.START;
-                case Key.Back:
-                    return Button.SELECT;
-            }
-
-            return null;
+                Key.Left => Button.LEFT,
+                Key.Right => Button.RIGHT,
+                Key.Up => Button.UP,
+                Key.Down => Button.DOWN,
+                Key.Z => Button.A,
+                Key.X => Button.B,
+                Key.Enter => Button.START,
+                Key.Back => Button.SELECT,
+                _ => null
+            };
         }
     }
 }

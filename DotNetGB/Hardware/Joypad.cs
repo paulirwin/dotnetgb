@@ -4,7 +4,7 @@ namespace DotNetGB.Hardware
 {
     public class Joypad : IAddressSpace
     {
-        private ISet<Button> _buttons = new HashSet<Button>();
+        private readonly ISet<Button> _buttons = new HashSet<Button>();
 
         private int _p1;
 
