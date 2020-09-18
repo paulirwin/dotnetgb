@@ -28,7 +28,7 @@ namespace DotNetGB
 
         private readonly Sound _sound;
 
-        //private readonly SerialPort _serialPort;
+        private readonly SerialPort _serialPort;
 
         private readonly bool _gbc;
 
@@ -59,12 +59,12 @@ namespace DotNetGB
             _gpu = new Gpu(display, interruptManager, _dma, oamRam, _gbc);
             _hdma = new Hdma(_mmu);
             _sound = new Sound(soundOutput, _gbc);
-            //_serialPort = new SerialPort(_interruptManager, serialEndpoint, _speedMode);
+            _serialPort = new SerialPort(interruptManager, serialEndpoint, _speedMode);
             _mmu.AddAddressSpace(rom);
             _mmu.AddAddressSpace(_gpu);
             _mmu.AddAddressSpace(new Joypad(interruptManager, controller));
             _mmu.AddAddressSpace(interruptManager);
-            //_mmu.AddAddressSpace(_serialPort);
+            _mmu.AddAddressSpace(_serialPort);
             _mmu.AddAddressSpace(_timer);
             _mmu.AddAddressSpace(_dma);
             _mmu.AddAddressSpace(_sound);
@@ -157,7 +157,7 @@ namespace DotNetGB
             _doStop = true;
         }
 
-        private Gpu.GpuMode? Tick()
+        internal Gpu.GpuMode? Tick()
         {
             _timer.Tick();
             if (_hdma.IsTransferInProgress)
@@ -170,7 +170,7 @@ namespace DotNetGB
             }
             _dma.Tick();
             _sound.Tick();
-            //_serialPort.Tick();
+            _serialPort.Tick();
             return _gpu.Tick();
         }
 

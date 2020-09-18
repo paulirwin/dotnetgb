@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Runtime.CompilerServices;
 using DotNetGB.Util;
 using static DotNetGB.Util.BitUtils;
 
@@ -9,16 +10,14 @@ namespace DotNetGB.Hardware.CpuOpcodes
     public class OpcodeBuilder
     {
         private static readonly AluFunctions ALU = new AluFunctions();
-        private static readonly ISet<AluFunctions.IntRegistryFunction> OEM_BUG;
 
+        private static readonly AluFunctions.IntRegistryFunction OEM_BUG_1;
+        private static readonly AluFunctions.IntRegistryFunction OEM_BUG_2;
+        
         static OpcodeBuilder()
         {
-            var oemBugFunctions = new HashSet<AluFunctions.IntRegistryFunction>
-            {
-                ALU.FindAluFunction("INC", DataType.D16), 
-                ALU.FindAluFunction("DEC", DataType.D16),
-            };
-            OEM_BUG = oemBugFunctions.ToImmutableHashSet();
+            OEM_BUG_1 = ALU.FindAluFunction("INC", DataType.D16);
+            OEM_BUG_2 = ALU.FindAluFunction("DEC", DataType.D16);
         }
 
         private DataType lastDataType;
@@ -695,9 +694,10 @@ namespace DotNetGB.Hardware.CpuOpcodes
 
         private static bool CausesOemBug(AluFunctions.IntRegistryFunction function, int context)
         {
-            return OEM_BUG.Contains(function) && InOamArea(context);
+            return (function == OEM_BUG_1 || function == OEM_BUG_2) && InOamArea(context);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static bool InOamArea(int address)
         {
             return address >= 0xfe00 && address <= 0xfeff;

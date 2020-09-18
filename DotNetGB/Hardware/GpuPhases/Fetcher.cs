@@ -1,5 +1,4 @@
 ﻿using System.Linq;
-
 using SpritePosition = DotNetGB.Hardware.GpuPhases.OamSearch.SpritePosition;
 using static DotNetGB.Hardware.GpuRegister;
 using static DotNetGB.Util.BitUtils;
@@ -13,6 +12,15 @@ namespace DotNetGB.Hardware.GpuPhases
             READ_TILE_ID, READ_DATA_1, READ_DATA_2, PUSH,
             READ_SPRITE_TILE_ID, READ_SPRITE_FLAGS, READ_SPRITE_DATA_1, READ_SPRITE_DATA_2, PUSH_SPRITE,
         }
+
+        private static readonly State[] IN_PROGRESS_STATES =
+        {
+            State.READ_SPRITE_TILE_ID, 
+            State.READ_SPRITE_FLAGS, 
+            State.READ_SPRITE_DATA_1, 
+            State.READ_SPRITE_DATA_2, 
+            State.PUSH_SPRITE,
+        };
 
         private static readonly int[] EMPTY_PIXEL_LINE = new int[8];
 
@@ -231,8 +239,7 @@ namespace DotNetGB.Hardware.GpuPhases
             return videoRam[tileAddress + effectiveLine * 2 + byteNumber];
         }
 
-        // TODO: move array into static readonly field
-        public bool SpriteInProgress => new[] { State.READ_SPRITE_TILE_ID, State.READ_SPRITE_FLAGS, State.READ_SPRITE_DATA_1, State.READ_SPRITE_DATA_2, State.PUSH_SPRITE }.Contains(_state);
+        public bool SpriteInProgress => IN_PROGRESS_STATES.Contains(_state);
 
         public int[] Zip(int data1, int data2, bool reverse) => Zip(data1, data2, reverse, _pixelLine);
 

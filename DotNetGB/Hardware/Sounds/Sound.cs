@@ -15,24 +15,30 @@ namespace DotNetGB.Hardware.Sounds
             0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
         };
 
-        private readonly AbstractSoundMode[] allModes = new AbstractSoundMode[4];
+        private readonly AbstractSoundMode[] allModes;
+
+        private readonly AbstractSoundMode mode1;
+        private readonly AbstractSoundMode mode2;
+        private readonly AbstractSoundMode mode3; 
+        private readonly AbstractSoundMode mode4;
 
         private readonly Ram r = new Ram(0xff24, 0x03);
 
         private readonly ISoundOutput output;
 
-        private int[] channels = new int[4];
+        private readonly int[] channels = new int[4];
 
         private bool enabled;
 
-        private bool[] overridenEnabled = { true, true, true, true };
+        private readonly bool[] overridenEnabled = { true, true, true, true };
 
         public Sound(ISoundOutput output, bool gbc)
         {
-            allModes[0] = new SoundMode1(gbc);
-            allModes[1] = new SoundMode2(gbc);
-            allModes[2] = new SoundMode3(gbc);
-            allModes[3] = new SoundMode4(gbc);
+            mode1 = new SoundMode1(gbc);
+            mode2 = new SoundMode2(gbc);
+            mode3 = new SoundMode3(gbc);
+            mode4 = new SoundMode4(gbc);
+            allModes = new[] {mode1, mode2, mode3, mode4};
             this.output = output;
         }
 
@@ -42,11 +48,11 @@ namespace DotNetGB.Hardware.Sounds
             {
                 return;
             }
-            for (int i = 0; i < allModes.Length; i++)
-            {
-                AbstractSoundMode m = allModes[i];
-                channels[i] = m.Tick();
-            }
+
+            channels[0] = mode1.Tick();
+            channels[1] = mode2.Tick();
+            channels[2] = mode3.Tick();
+            channels[3] = mode4.Tick();
 
             int selection = r[0xff25];
             int left = 0;
