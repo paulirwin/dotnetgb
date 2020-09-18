@@ -33,7 +33,7 @@ namespace DotNetGB.WpfGui
             _controller = new WpfController();
             _gameboy = new Gameboy(_options, _rom, _display, _controller, _sound, new NullSerialEndpoint());
         }
-
+        
         private static GameboyOptions ParseArgs(string[] args)
         {
             if (args.Length == 0)

@@ -30,7 +30,7 @@ namespace DotNetGB.Hardware.Sounds
 
         private bool enabled;
 
-        private readonly bool[] overridenEnabled = { true, true, true, true };
+        //private readonly bool[] overridenEnabled = { true, true, true, true };
 
         public Sound(ISoundOutput output, bool gbc)
         {
@@ -59,10 +59,10 @@ namespace DotNetGB.Hardware.Sounds
             int right = 0;
             for (int i = 0; i < 4; i++)
             {
-                if (!overridenEnabled[i])
-                {
-                    continue;
-                }
+                //if (!overridenEnabled[i])
+                //{
+                //    continue;
+                //}
                 if ((selection & (1 << i + 4)) != 0)
                 {
                     left += channels[i];
@@ -197,9 +197,9 @@ namespace DotNetGB.Hardware.Sounds
             }
         }
 
-        public void EnableChannel(int i, bool enabled)
-        {
-            overridenEnabled[i] = enabled;
-        }
+        //public void EnableChannel(int i, bool enabled)
+        //{
+        //    overridenEnabled[i] = enabled;
+        //}
     }
 }

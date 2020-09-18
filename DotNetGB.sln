@@ -7,7 +7,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DotNetGB", "DotNetGB\DotNet
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DotNetGB.WpfGui", "DotNetGB.WpfGui\DotNetGB.WpfGui.csproj", "{2DC2782E-E8E5-4CBE-9B46-2E7464A99C2C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DotNetGB.Tests", "DotNetGB.Tests\DotNetGB.Tests.csproj", "{94DAFCED-6A8F-4049-9C94-C48113210CAA}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DotNetGB.Tests", "DotNetGB.Tests\DotNetGB.Tests.csproj", "{94DAFCED-6A8F-4049-9C94-C48113210CAA}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

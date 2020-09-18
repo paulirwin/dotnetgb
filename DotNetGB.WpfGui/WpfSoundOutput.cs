@@ -7,7 +7,7 @@ namespace DotNetGB.WpfGui
     {
         private const int SAMPLE_RATE = 22050;
 
-        private const int BUFFER_SIZE = 1024;
+        private const int BUFFER_SIZE = 512;
 
         private const int DIVIDER = Gameboy.TICKS_PER_SEC / SAMPLE_RATE;
 
@@ -26,6 +26,9 @@ namespace DotNetGB.WpfGui
         public WpfSoundOutput()
         {
             _provider = new BufferedWaveProvider(_format);
+            
+            // HACK.PI: figure out issue with "buffer full" exception without needing this property set
+            _provider.DiscardOnBufferOverflow = true;
         }
 
         public void Start()

@@ -4,11 +4,14 @@ using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using DotNetGB.Hardware;
+using Microsoft.Win32;
 
 namespace DotNetGB.WpfGui
 {
     public partial class MainWindow : IDisplay
     {
+        public event EventHandler<string> OpenFile;
+
         public const int DISPLAY_WIDTH = 160;
 
         public const int DISPLAY_HEIGHT = 144;
@@ -169,6 +172,27 @@ namespace DotNetGB.WpfGui
             Display.WritePixels(_rect, _pixels, STRIDE, 0);
 
             Display.Unlock();
+        }
+
+        private void MenuItemExit_OnClick(object sender, RoutedEventArgs e) => Environment.Exit(0);
+
+        private void MenuItemOpen_OnClick(object sender, RoutedEventArgs e)
+        {
+            var dialog = new OpenFileDialog
+            {
+                Multiselect = false,
+                Filter = "ROM Files (*.gb,*.gbc;*.rom)|*.gb;*.gbc;*.rom|All Files (*.*)|*.*",
+            };
+
+            if (dialog.ShowDialog().GetValueOrDefault())
+            {
+                OnOpenFile(dialog.FileName);
+            }
+        }
+
+        protected virtual void OnOpenFile(string fileName)
+        {
+            OpenFile?.Invoke(this, fileName);
         }
     }
 }
