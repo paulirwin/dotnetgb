@@ -27,7 +27,7 @@
 
         public void DropPixel() => DequeuePixel();
 
-        private int DequeuePixel()
+        internal int DequeuePixel()
         {
             _pixelType.Dequeue();
             return GetColor(_palettes.Dequeue(), _pixels.Dequeue());

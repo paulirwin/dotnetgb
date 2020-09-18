@@ -31,6 +31,6 @@
             return 1 & ~lfsr;
         }
 
-        int Value => lfsr;
+        internal int Value => lfsr;
     }
 }

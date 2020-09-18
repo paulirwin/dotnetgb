@@ -2,5 +2,6 @@
 {
     public interface ISerialEndpoint
     {
+        int Transfer(int outgoing);
     }
 }

@@ -59,26 +59,14 @@ namespace DotNetGB.Hardware
 
         public int Get(IRegister reg)
         {
-            if (_registers.ContainsKey(reg.Address))
-            {
-                return _values[reg.Address];
-            } 
-            else
-            {
-                throw new ArgumentException($"Not valid register: " + reg);
-            }
+            // NOTE.PI: Removed "ContainsKey" check here because "else" just threw exception
+            return _values[reg.Address];
         }
 
         public void Put(IRegister reg, int value)
         {
-            if (_registers.ContainsKey(reg.Address))
-            {
-                _values[reg.Address] = value;
-            }
-            else
-            {
-                throw new ArgumentException($"Not valid register: " + reg);
-            }
+            // NOTE.PI: Removed "ContainsKey" check here because "else" just threw exception
+            _values[reg.Address] = value;
         }
 
         public MemoryRegisters Freeze() => new MemoryRegisters(this);

@@ -5,7 +5,9 @@ VisualStudioVersion = 16.0.30204.135
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DotNetGB", "DotNetGB\DotNetGB.csproj", "{CE05973F-5B35-48B0-9B43-4086FF6B4D1D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DotNetGB.WpfGui", "DotNetGB.WpfGui\DotNetGB.WpfGui.csproj", "{2DC2782E-E8E5-4CBE-9B46-2E7464A99C2C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DotNetGB.WpfGui", "DotNetGB.WpfGui\DotNetGB.WpfGui.csproj", "{2DC2782E-E8E5-4CBE-9B46-2E7464A99C2C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DotNetGB.Tests", "DotNetGB.Tests\DotNetGB.Tests.csproj", "{94DAFCED-6A8F-4049-9C94-C48113210CAA}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,6 +23,10 @@ Global
 		{2DC2782E-E8E5-4CBE-9B46-2E7464A99C2C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2DC2782E-E8E5-4CBE-9B46-2E7464A99C2C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2DC2782E-E8E5-4CBE-9B46-2E7464A99C2C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{94DAFCED-6A8F-4049-9C94-C48113210CAA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{94DAFCED-6A8F-4049-9C94-C48113210CAA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{94DAFCED-6A8F-4049-9C94-C48113210CAA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{94DAFCED-6A8F-4049-9C94-C48113210CAA}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

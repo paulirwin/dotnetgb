@@ -345,7 +345,7 @@ namespace DotNetGB.Hardware
 
         public Registers Registers { get; }
 
-        private void ClearState()
+        public void ClearState()
         {
             _opcode1 = 0;
             _opcode2 = 0;
@@ -366,6 +366,6 @@ namespace DotNetGB.Hardware
 
         public CpuState State => _state;
 
-        internal Opcode CurrentOpcode => _currentOpcode;
+        public Opcode? CurrentOpcode => _currentOpcode;
     }
 }

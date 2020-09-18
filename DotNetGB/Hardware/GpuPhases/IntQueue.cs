@@ -6,12 +6,15 @@ namespace DotNetGB.Hardware.GpuPhases
     {
         private readonly int[] _array;
 
+        private readonly int _capacity;
+
         private int _size;
 
         private int _offset = 0;
 
         public IntQueue(int capacity)
         {
+            _capacity = capacity;
             _array = new int[capacity];
             _size = 0;
             _offset = 0;
@@ -21,11 +24,11 @@ namespace DotNetGB.Hardware.GpuPhases
 
         public void Enqueue(int value)
         {
-            if (_size == _array.Length)
+            if (_size == _capacity)
             {
                 throw new InvalidOperationException("Queue is full");
             }
-            _array[(_offset + _size) % _array.Length] = value;
+            _array[(_offset + _size) % _capacity] = value;
             _size++;
         }
 
@@ -37,7 +40,7 @@ namespace DotNetGB.Hardware.GpuPhases
             }
             _size--;
             int value = _array[_offset++];
-            if (_offset == _array.Length)
+            if (_offset == _capacity)
             {
                 _offset = 0;
             }
@@ -50,7 +53,7 @@ namespace DotNetGB.Hardware.GpuPhases
             {
                 throw new ArgumentOutOfRangeException();
             }
-            return _array[(_offset + index) % _array.Length];
+            return _array[(_offset + index) % _capacity];
         }
 
         public void Set(int index, int value)
@@ -59,7 +62,7 @@ namespace DotNetGB.Hardware.GpuPhases
             {
                 throw new ArgumentOutOfRangeException();
             }
-            _array[(_offset + index) % _array.Length] = value;
+            _array[(_offset + index) % _capacity] = value;
         }
 
         public void Clear()
