@@ -145,7 +145,7 @@ namespace DotNetGB.Hardware
 
             _src = (_hdma1234[HDMA1] << 8) | (_hdma1234[HDMA2] & 0xf0);
             _dst = ((_hdma1234[HDMA3] & 0x1f) << 8) | (_hdma1234[HDMA4] & 0xf0);
-            _src = _src & 0xfff0;
+            _src &= 0xfff0;
             _dst = (_dst & 0x1fff) | 0x8000;
 
             _transferInProgress = true;

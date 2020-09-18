@@ -221,19 +221,14 @@ namespace DotNetGB.Hardware.CpuOpcodes
 
             public bool Proceed(Registers registers)
             {
-                switch (condition)
+                return condition switch
                 {
-                    case "NZ":
-                        return !registers.Flags.Z;
-                    case "Z":
-                        return registers.Flags.Z;
-                    case "NC":
-                        return !registers.Flags.C;
-                    case "C":
-                        return registers.Flags.C;
-                }
-
-                return false;
+                    "NZ" => !registers.Flags.Z,
+                    "Z" => registers.Flags.Z,
+                    "NC" => !registers.Flags.C,
+                    "C" => registers.Flags.C,
+                    _ => false
+                };
             }
 
             public override string ToString()

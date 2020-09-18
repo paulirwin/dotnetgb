@@ -38,26 +38,15 @@ namespace DotNetGB.Hardware.Sounds
         {
             get
             {
-                switch (address - offset)
+                return (address - offset) switch
                 {
-                    case 0:
-                        return Nr0;
-
-                    case 1:
-                        return Nr1;
-
-                    case 2:
-                        return Nr2;
-
-                    case 3:
-                        return Nr3;
-
-                    case 4:
-                        return Nr4;
-
-                    default:
-                        throw new ArgumentException($"Illegal address for sound mode: {address:x2}");
-                }
+                    0 => Nr0,
+                    1 => Nr1,
+                    2 => Nr2,
+                    3 => Nr3,
+                    4 => Nr4,
+                    _ => throw new ArgumentException($"Illegal address for sound mode: {address:x2}")
+                };
             }
             set
             {

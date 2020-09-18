@@ -68,23 +68,23 @@ namespace DotNetGB.Hardware
 
             if (type.IsMbc1())
             {
-                _addressSpace = new Mbc1(rom, type, battery, romBanks, ramBanks);
+                _addressSpace = new Mbc1(rom, battery, romBanks, ramBanks);
             }
             else if (type.IsMbc2())
             {
-                _addressSpace = new Mbc2(rom, type, battery, romBanks);
+                _addressSpace = new Mbc2(rom, battery);
             }
             else if (type.IsMbc3())
             {
-                _addressSpace = new Mbc3(rom, type, battery, romBanks, ramBanks);
+                _addressSpace = new Mbc3(rom, battery, ramBanks);
             }
             else if (type.IsMbc5())
             {
-                _addressSpace = new Mbc5(rom, type, battery, romBanks, ramBanks);
+                _addressSpace = new Mbc5(rom, battery, ramBanks);
             }
             else
             {
-                _addressSpace = new Rom(rom, type, romBanks, ramBanks);
+                _addressSpace = new Rom(rom);
             }
 
             _dmgBootstrap = options.UseBootstrap ? 0 : 1;
@@ -136,22 +136,18 @@ namespace DotNetGB.Hardware
                 {
                     return BootRom.GAMEBOY_CLASSIC[address];
                 }
-                else if (_dmgBootstrap == 0 && _gbc && address >= 0x000 && address < 0x0100)
+
+                if (_dmgBootstrap == 0 && _gbc && address >= 0x000 && address < 0x0100)
                 {
                     return BootRom.GAMEBOY_COLOR[address];
                 }
-                else if (_dmgBootstrap == 0 && _gbc && address >= 0x200 && address < 0x0900)
+
+                if (_dmgBootstrap == 0 && _gbc && address >= 0x200 && address < 0x0900)
                 {
                     return BootRom.GAMEBOY_COLOR[address - 0x0100];
                 }
-                else if (address == 0xff50)
-                {
-                    return 0xff;
-                }
-                else
-                {
-                    return _addressSpace[address];
-                }
+
+                return address == 0xff50 ? 0xff : _addressSpace[address];
             }
             set
             {
@@ -170,37 +166,32 @@ namespace DotNetGB.Hardware
         {
             string ext = file.Extension;
 
-            using (var inputStream = file.OpenRead())
+            using var inputStream = file.OpenRead();
+
+            if ("zip".Equals(ext, StringComparison.OrdinalIgnoreCase))
             {
-                if ("zip".Equals(ext, StringComparison.OrdinalIgnoreCase))
+                using var zis = new ZipArchive(inputStream);
+
+                foreach (var entry in zis.Entries)
                 {
-                    using (var zis = new ZipArchive(inputStream))
+                    string name = entry.Name;
+                    string entryExt = Path.GetExtension(name);
+
+                    if (new[] {"gb", "gbc", "rom"}.Any(e => e.Equals(entryExt, StringComparison.OrdinalIgnoreCase)))
                     {
-                        foreach (var entry in zis.Entries)
-                        {
-                            string name = entry.Name;
-                            string entryExt = Path.GetExtension(name);
+                        using var eStream = entry.Open();
 
-                            if (new[] {"gb", "gbc", "rom"}.Any(e => e.Equals(entryExt, StringComparison.OrdinalIgnoreCase)))
-                            {
-                                using (var eStream = entry.Open())
-                                {
-                                    return Load(eStream, (int) entry.Length);
-                                }
-                            }
-                        }
+                        return Load(eStream);
                     }
+                }
 
-                    throw new InvalidOperationException("Can't find ROM file inside the zip.");
-                }
-                else
-                {
-                    return Load(inputStream, (int) inputStream.Length);
-                }
+                throw new InvalidOperationException("Can't find ROM file inside the zip.");
             }
+
+            return Load(inputStream);
         }
 
-        private static int[] Load(Stream stream, int length)
+        private static int[] Load(Stream stream)
         {
             byte[] byteArray;
             using (var ms = new MemoryStream())
@@ -219,68 +210,34 @@ namespace DotNetGB.Hardware
 
         private static int GetRomBanks(int id)
         {
-            switch (id)
+            return id switch
             {
-                case 0:
-                    return 2;
-
-                case 1:
-                    return 4;
-
-                case 2:
-                    return 8;
-
-                case 3:
-                    return 16;
-
-                case 4:
-                    return 32;
-
-                case 5:
-                    return 64;
-
-                case 6:
-                    return 128;
-
-                case 7:
-                    return 256;
-
-                case 0x52:
-                    return 72;
-
-                case 0x53:
-                    return 80;
-
-                case 0x54:
-                    return 96;
-
-                default:
-                    throw new ArgumentException($"Unsupported ROM size: 0x{id:x2}");
-            }
+                0 => 2,
+                1 => 4,
+                2 => 8,
+                3 => 16,
+                4 => 32,
+                5 => 64,
+                6 => 128,
+                7 => 256,
+                0x52 => 72,
+                0x53 => 80,
+                0x54 => 96,
+                _ => throw new ArgumentException($"Unsupported ROM size: 0x{id:x2}")
+            };
         }
 
         private static int GetRamBanks(int id)
         {
-            switch (id)
+            return id switch
             {
-                case 0:
-                    return 0;
-
-                case 1:
-                    return 1;
-
-                case 2:
-                    return 1;
-
-                case 3:
-                    return 4;
-
-                case 4:
-                    return 16;
-
-                default:
-                    throw new ArgumentException($"Unsupported RAM size: 0x{id:x2}");
-            }
+                0 => 0,
+                1 => 1,
+                2 => 1,
+                3 => 4,
+                4 => 16,
+                _ => throw new ArgumentException($"Unsupported RAM size: 0x{id:x2}")
+            };
         }
     }
 }

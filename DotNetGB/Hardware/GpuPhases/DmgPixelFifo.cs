@@ -10,13 +10,10 @@
 
         private readonly IDisplay _display;
 
-        private readonly Lcdc _lcdc;
-
         private readonly MemoryRegisters _registers;
 
-        public DmgPixelFifo(IDisplay display, Lcdc lcdc, MemoryRegisters registers)
+        public DmgPixelFifo(IDisplay display, MemoryRegisters registers)
         {
-            _lcdc = lcdc;
             _display = display;
             _registers = registers;
         }

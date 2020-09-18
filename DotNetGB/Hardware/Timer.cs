@@ -78,21 +78,14 @@ namespace DotNetGB.Hardware
         {
             get
             {
-                switch (address)
+                return address switch
                 {
-                    case 0xff04:
-                        return _div >> 8;
-
-                    case 0xff05:
-                        return _tima;
-
-                    case 0xff06:
-                        return _tma;
-
-                    case 0xff07:
-                        return _tac | 0b11111000;
-                }
-                throw new ArgumentOutOfRangeException();
+                    0xff04 => _div >> 8,
+                    0xff05 => _tima,
+                    0xff06 => _tma,
+                    0xff07 => _tac | 0b11111000,
+                    _ => throw new ArgumentOutOfRangeException()
+                };
             }
             set
             {

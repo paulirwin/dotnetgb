@@ -4,7 +4,7 @@ namespace DotNetGB.Hardware
 {
     public class GbcRam : IAddressSpace
     {
-        private int[] _ram = new int[7 * 0x1000];
+        private readonly int[] _ram = new int[7 * 0x1000];
 
         private int _svbk;
 
@@ -12,17 +12,7 @@ namespace DotNetGB.Hardware
 
         public int this[int address]
         {
-            get
-            {
-                if (address == 0xff70)
-                {
-                    return _svbk;
-                }
-                else
-                {
-                    return _ram[Translate(address)];
-                }
-            }
+            get => address == 0xff70 ? _svbk : _ram[Translate(address)];
             set
             {
                 if (address == 0xff70)

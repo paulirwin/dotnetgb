@@ -102,17 +102,12 @@ namespace DotNetGB.Hardware
         {
             get
             {
-                switch (address)
+                return address switch
                 {
-                    case 0xff0f:
-                        return _interruptFlag;
-
-                    case 0xffff:
-                        return _interruptEnabled;
-
-                    default:
-                        return 0xff;
-                }
+                    0xff0f => _interruptFlag,
+                    0xffff => _interruptEnabled,
+                    _ => 0xff
+                };
             }
             set 
             {

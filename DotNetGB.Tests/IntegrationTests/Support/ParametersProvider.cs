@@ -1,5 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 
@@ -26,7 +25,7 @@ namespace DotNetGB.Tests.IntegrationTests.Support
             => new DirectoryInfo(Path.Combine("Resources", dirName))
                 .EnumerateFiles("*.gb", recurse ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly)
                 .Where(f => !excludes.Any(p => f.Name.EndsWith(p)))
-                .Select(p => (new object[] { Path.GetRelativePath(Directory.GetCurrentDirectory(), p.FullName), p }))
+                .Select(p => (new object[] { p }))
                 .ToList();
     }
 }

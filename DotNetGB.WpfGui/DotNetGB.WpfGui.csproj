@@ -6,6 +6,7 @@
     <UseWPF>true</UseWPF>
     <Nullable>enable</Nullable>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <AssemblyName>DotNetGBWin</AssemblyName>
   </PropertyGroup>
 
   <ItemGroup>

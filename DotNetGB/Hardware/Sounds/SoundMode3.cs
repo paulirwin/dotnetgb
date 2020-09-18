@@ -124,7 +124,7 @@ namespace DotNetGB.Hardware.Sounds
                         }
                         else
                         {
-                            pos = pos & ~3;
+                            pos &= ~3;
                             for (int j = 0; j < 4; j++)
                             {
                                 waveRam[0xff30 + j] = waveRam[0xff30 + ((pos + j) % 0x10)];
@@ -211,22 +211,17 @@ namespace DotNetGB.Hardware.Sounds
             }
             else
             {
-                b = b & 0x0f;
+                b &= 0x0f;
             }
 
-            switch (Volume)
+            return Volume switch
             {
-                case 0:
-                    return 0;
-                case 1:
-                    return b;
-                case 2:
-                    return b >> 1;
-                case 3:
-                    return b >> 2;
-                default:
-                    throw new InvalidOperationException();
-            }
+                0 => 0,
+                1 => b,
+                2 => b >> 1,
+                3 => b >> 2,
+                _ => throw new InvalidOperationException()
+            };
         }
 
         private void ResetFreqDivider()

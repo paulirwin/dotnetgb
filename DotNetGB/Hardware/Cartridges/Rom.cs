@@ -4,7 +4,7 @@
     {
         private readonly int[] _rom;
 
-        public Rom(int[] rom, CartridgeType type, int romBanks, int ramBanks)
+        public Rom(int[] rom)
         {
             _rom = rom;
         }
@@ -20,10 +20,8 @@
                 {
                     return _rom[address];
                 }
-                else
-                {
-                    return 0;
-                }
+
+                return 0;
             }
             set { }
         }

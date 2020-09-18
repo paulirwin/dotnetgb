@@ -10,15 +10,15 @@ namespace DotNetGB.Hardware.Sounds
 
         private int i;
 
-        private FrequencySweep frequencySweep;
+        private readonly FrequencySweep frequencySweep;
 
-        private VolumeEnvelope volumeEnvelope;
+        private readonly VolumeEnvelope volumeEnvelope;
 
         public SoundMode1(bool gbc)
             : base(0xff10, 64, gbc)
         {
-            this.frequencySweep = new FrequencySweep();
-            this.volumeEnvelope = new VolumeEnvelope();
+            frequencySweep = new FrequencySweep();
+            volumeEnvelope = new VolumeEnvelope();
         }
 
         public override void Start()
@@ -120,19 +120,14 @@ namespace DotNetGB.Hardware.Sounds
         {
             get
             {
-                switch (Nr1 >> 6)
+                return (Nr1 >> 6) switch
                 {
-                    case 0:
-                        return 0b00000001;
-                    case 1:
-                        return 0b10000001;
-                    case 2:
-                        return 0b10000111;
-                    case 3:
-                        return 0b01111110;
-                    default:
-                        throw new InvalidOperationException();
-                }
+                    0 => 0b00000001,
+                    1 => 0b10000001,
+                    2 => 0b10000111,
+                    3 => 0b01111110,
+                    _ => throw new InvalidOperationException()
+                };
             }
         }
 

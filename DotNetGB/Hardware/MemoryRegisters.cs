@@ -30,9 +30,9 @@ namespace DotNetGB.Hardware
             }
         }
 
-        private IDictionary<int, IRegister> _registers;
+        private readonly IDictionary<int, IRegister> _registers;
 
-        private IDictionary<int, int> _values = new Dictionary<int, int>();
+        private readonly IDictionary<int, int> _values = new Dictionary<int, int>();
 
         public MemoryRegisters(IEnumerable<IRegister> registers)
         {

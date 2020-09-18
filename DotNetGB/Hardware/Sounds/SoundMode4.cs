@@ -2,18 +2,18 @@
 {
     public class SoundMode4 : AbstractSoundMode
     {
-        private VolumeEnvelope volumeEnvelope;
+        private readonly VolumeEnvelope volumeEnvelope;
 
-        private PolynomialCounter polynomialCounter;
+        private readonly PolynomialCounter polynomialCounter;
 
         private int lastResult;
 
-        private Lfsr lfsr = new Lfsr();
+        private readonly Lfsr lfsr = new Lfsr();
 
         public SoundMode4(bool gbc)
             : base(0xff1f, 64, gbc)
         {
-            this.volumeEnvelope = new VolumeEnvelope();
+            volumeEnvelope = new VolumeEnvelope();
             this.polynomialCounter = new PolynomialCounter();
         }
 

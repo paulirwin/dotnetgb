@@ -21,20 +21,17 @@ namespace DotNetGB.WpfGui
 
         private readonly WpfController _controller;
 
-        private readonly SpeedMode _speedMode;
-
         private readonly Gameboy _gameboy;
         
         public Emulator(string[] args)
         {
             _options = ParseArgs(args);
             _rom = new Cartridge(_options);
-            _speedMode = new SpeedMode();
 
             _sound = new WpfSoundOutput();
             _display = new MainWindow();
             _controller = new WpfController();
-            _gameboy = new Gameboy(_options, _rom, _display, _controller, _sound, null);
+            _gameboy = new Gameboy(_options, _rom, _display, _controller, _sound, new NullSerialEndpoint());
         }
 
         private static GameboyOptions ParseArgs(string[] args)
