@@ -62,9 +62,9 @@ namespace DotNetGB.WpfGui
 
         public void PutColorPixel(int gbcRgb)
         {
-            byte r = (byte)((gbcRgb >> 0) & 0x1f);
-            byte g = (byte)((gbcRgb >> 5) & 0x1f);
-            byte b = (byte)((gbcRgb >> 10) & 0x1f);
+            byte r = (byte)((gbcRgb & 0x1f) * 8);
+            byte g = (byte)(((gbcRgb >> 5) & 0x1f) * 8);
+            byte b = (byte)(((gbcRgb >> 10) & 0x1f) * 8);
 
             _pixels[_i++] = r;
             _pixels[_i++] = g;
