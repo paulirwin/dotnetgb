@@ -6,6 +6,11 @@ namespace DotNetGB
 {
     public class GameboyOptions
     {
+        public GameboyOptions(string romFile)
+            : this(new FileInfo(romFile))
+        {
+        }
+
         public GameboyOptions(FileInfo romFile)
             : this(romFile, new List<string>(), new List<string>())
         {
@@ -42,18 +47,17 @@ namespace DotNetGB
 
         public bool Headless { get; set; }
 
-        public static void PrintUsage(TextWriter stream)
+        public GameboyOptions WithRomFile(string romFile)
         {
-            stream.WriteLine("Usage:");
-            stream.WriteLine("DotNetGB.exe [OPTIONS] ROM_FILE");
-            stream.WriteLine();
-            stream.WriteLine("Available options:");
-            stream.WriteLine("  -d  --force-dmg                Emulate classic GB (DMG) for universal ROMs");
-            stream.WriteLine("  -c  --force-cgb                Emulate color GB (CGB) for all ROMs");
-            stream.WriteLine("  -b  --use-bootstrap            Start with the GB bootstrap");
-            stream.WriteLine("  -db --disable-battery-saves    Disable battery saves");
-            stream.WriteLine("      --debug                    Enable debug console");
-            stream.WriteLine("      --headless                 Start in the headless mode");
+            return new GameboyOptions(romFile)
+            {
+                Debug = Debug,
+                DisableBatterySaves = DisableBatterySaves,
+                ForceCgb = ForceCgb,
+                ForceDmg = ForceDmg,
+                Headless = Headless,
+                UseBootstrap = UseBootstrap,
+            };
         }
     }
 }

@@ -25,5 +25,13 @@
         public void DisableLcd()
         {
         }
+
+        public void Run()
+        {
+        }
+
+        public void Stop()
+        {
+        }
     }
 }

@@ -1,177 +1,54 @@
 ﻿using System;
-using System.Threading;
 using System.Windows;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using DotNetGB.Hardware;
 using Microsoft.Win32;
 
 namespace DotNetGB.WpfGui
 {
-    public partial class MainWindow : IDisplay
+    public partial class MainWindow
     {
-        public event EventHandler<string> OpenFile;
+        private Emulator? _emulator;
 
-        public const int DISPLAY_WIDTH = 160;
+        private readonly WpfController _controller = new WpfController();
 
-        public const int DISPLAY_HEIGHT = 144;
+        private readonly WpfSoundOutput _soundOutput = new WpfSoundOutput();
 
-        private const int STRIDE = DISPLAY_WIDTH * 3; // 3 bytes (24 bits) per pixel
-        
-        public static readonly int[] COLORS = {
-            0xe6f8da, 0x99c886, 0x437969, 0x051f2a
-        };
+        private GameboyOptions? _options;
 
-        private readonly byte[] _pixels;
-
-        private volatile bool _enabled;
-
-        private volatile bool _doStop;
-
-        private volatile bool _doRefresh;
-
-        private int _i;
-
-        private readonly Int32Rect _rect = new Int32Rect(0, 0, DISPLAY_WIDTH, DISPLAY_HEIGHT);
-
-        public MainWindow()
+        public MainWindow(string[] args)
         {
             InitializeComponent();
             Loaded += OnLoaded;
-            Closed += (sender, args) => Environment.Exit(0);
+            Closed += (s, e) => Environment.Exit(0);
 
-            _pixels = new byte[DISPLAY_WIDTH * DISPLAY_HEIGHT * STRIDE];
-            Array.Fill(_pixels, (byte)0);
+            if (args.Length > 0)
+            {
+                _options = Emulator.ParseArgs(args);
+            }
         }
-
-        public WriteableBitmap Display { get; } = new WriteableBitmap(DISPLAY_WIDTH, DISPLAY_HEIGHT, 96d, 96d, PixelFormats.Rgb24, null);
 
         private void OnLoaded(object sender, RoutedEventArgs e)
         {
-            DisplayImage.Source = Display;
-            DrawImage();
+            SetPreferredSize(new Size(320, 288));
+            AddKeyListener();
         }
 
-        public void SetPreferredSize(Size size)
+        private void SetPreferredSize(Size size)
         {
             Width = size.Width;
             Height = size.Height;
         }
-
-        public void PutDmgPixel(int color)
-        {
-            int c = COLORS[color];
-            byte r = (byte) (c >> 16);
-            byte g = (byte) ((c >> 8) & 0xff);
-            byte b = (byte) (c & 0xff);
-
-            _pixels[_i++] = r;
-            _pixels[_i++] = g;
-            _pixels[_i++] = b;
-        }
-
-        public void PutColorPixel(int gbcRgb)
-        {
-            byte r = (byte) ((gbcRgb >> 0) & 0x1f);
-            byte g = (byte) ((gbcRgb >> 5) & 0x1f);
-            byte b = (byte) ((gbcRgb >> 10) & 0x1f);
-
-            _pixels[_i++] = r;
-            _pixels[_i++] = g;
-            _pixels[_i++] = b;
-        }
         
-        public void RequestRefresh()
-        {
-            _doRefresh = true;
-            lock (this)
-            {
-                Monitor.PulseAll(this);
-            }
-        }
-
-        public void WaitForRefresh()
-        {
-            while (_doRefresh)
-            {
-                lock (this)
-                {
-                    try
-                    {
-                        Monitor.Wait(this, 1);
-                    }
-                    catch (ThreadInterruptedException)
-                    {
-                        break;
-                    }
-                }
-            }
-        }
-
-        public void EnableLcd()
-        {
-            _enabled = true;
-        }
-
-        public void DisableLcd()
-        {
-            _enabled = false;
-        }
-
-        public void AddKeyListener(WpfController controller)
+        private void AddKeyListener()
         {
             KeyDown += (sender, args) =>
             {
-                controller.ButtonPressed(args.Key);
+                _controller.ButtonPressed(args.Key);
             };
 
             KeyUp += (sender, args) =>
             {
-                controller.ButtonReleased(args.Key);
+                _controller.ButtonReleased(args.Key);
             };
-        }
-
-        public void Run()
-        {
-            _doStop = false;
-            _doRefresh = false;
-            _enabled = true;
-
-            while (!_doStop)
-            {
-                lock (this)
-                {
-                    try
-                    {
-                        Monitor.Wait(this, 1);
-                    }
-                    catch (ThreadInterruptedException)
-                    {
-                        break;
-                    }
-                }
-
-                if (_doRefresh)
-                {
-                    Dispatcher.InvokeAsync(DrawImage);
-
-                    lock (this)
-                    {
-                        _i = 0;
-                        _doRefresh = false;
-                        Monitor.PulseAll(this);
-                    }
-                }
-            }
-        }
-
-        private void DrawImage()
-        {
-            Display.Lock();
-
-            Display.WritePixels(_rect, _pixels, STRIDE, 0);
-
-            Display.Unlock();
         }
 
         private void MenuItemExit_OnClick(object sender, RoutedEventArgs e) => Environment.Exit(0);
@@ -184,15 +61,29 @@ namespace DotNetGB.WpfGui
                 Filter = "ROM Files (*.gb,*.gbc;*.rom)|*.gb;*.gbc;*.rom|All Files (*.*)|*.*",
             };
 
-            if (dialog.ShowDialog().GetValueOrDefault())
-            {
-                OnOpenFile(dialog.FileName);
-            }
+            if (!dialog.ShowDialog().GetValueOrDefault()) 
+                return;
+
+            _emulator?.Stop();
+            
+            _options = _options == null ? new GameboyOptions(dialog.FileName) : _options.WithRomFile(dialog.FileName);
+            _emulator = new Emulator(_options, EmulatorDisplay, _controller, _soundOutput);
+
+            Title = $"DotNetGB: {_emulator.Rom.Title}";
+                
+            _emulator.Run();
         }
 
-        protected virtual void OnOpenFile(string fileName)
+        private void MenuItemAudioEnabled_OnChecked(object sender, RoutedEventArgs e)
         {
-            OpenFile?.Invoke(this, fileName);
+            _soundOutput.Enabled = true;
+            _soundOutput.Start();
+        }
+
+        private void MenuItemAudioEnabled_OnUnchecked(object sender, RoutedEventArgs e)
+        {
+            _soundOutput.Enabled = false;
+            _soundOutput.Stop();
         }
     }
 }

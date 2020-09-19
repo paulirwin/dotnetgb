@@ -13,5 +13,9 @@
         void EnableLcd();
 
         void DisableLcd();
+
+        void Run();
+        
+        void Stop();
     }
 }

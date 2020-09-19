@@ -31,20 +31,31 @@ namespace DotNetGB.WpfGui
             _provider.DiscardOnBufferOverflow = true;
         }
 
+        public bool Enabled { get; set; }
+
         public void Start()
         {
+            if (_player.PlaybackState == PlaybackState.Playing)
+                return;
+
             _player.Init(_provider);
             _player.Play();
         }
 
         public void Stop()
         {
+            if (_player.PlaybackState == PlaybackState.Stopped)
+                return;
+
             _provider.ClearBuffer();
             _player.Stop();
         }
 
         public void Play(byte left, byte right)
         {
+            if (!Enabled)
+                return;
+
             if (_tick++ != 0)
             {
                 _tick %= DIVIDER;

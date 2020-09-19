@@ -1,7 +1,6 @@
 ﻿using System;
 using System.IO;
 using System.Threading;
-using System.Windows;
 using System.Windows.Threading;
 using DotNetGB.Hardware;
 
@@ -9,40 +8,29 @@ namespace DotNetGB.WpfGui
 {
     public class Emulator
     {
-        private const int SCALE = 2;
-
-        private readonly GameboyOptions _options;
-
-        private readonly Cartridge _rom;
-
-        private readonly WpfSoundOutput _sound;
-
-        private readonly MainWindow _display;
-
-        private readonly WpfController _controller;
+        private readonly IDisplay _display;
 
         private readonly Gameboy _gameboy;
-        
-        public Emulator(string[] args)
-        {
-            _options = ParseArgs(args);
-            _rom = new Cartridge(_options);
 
-            _sound = new WpfSoundOutput();
-            _display = new MainWindow();
-            _controller = new WpfController();
-            _gameboy = new Gameboy(_options, _rom, _display, _controller, _sound, new NullSerialEndpoint());
+        private readonly Thread _displayThread;
+
+        private readonly Thread _gameboyThread;
+
+        public Emulator(GameboyOptions options, IDisplay display, IController controller, ISoundOutput soundOutput)
+        {
+            Rom = new Cartridge(options);
+
+            _display = display;
+            _gameboy = new Gameboy(options, Rom, _display, controller, soundOutput, new NullSerialEndpoint());
+
+            _displayThread = new Thread(_display.Run);
+            _gameboyThread = new Thread(_gameboy.Run);
         }
-        
-        private static GameboyOptions ParseArgs(string[] args)
-        {
-            if (args.Length == 0)
-            {
-                GameboyOptions.PrintUsage(Console.Out);
-                Environment.Exit(0);
-                return null;
-            }
 
+        public Cartridge Rom { get; }
+
+        public static GameboyOptions? ParseArgs(string[] args)
+        {
             try
             {
                 return CreateGameboyOptions(args);
@@ -51,8 +39,6 @@ namespace DotNetGB.WpfGui
             {
                 Console.Error.WriteLine(e.Message);
                 Console.Error.WriteLine();
-                GameboyOptions.PrintUsage(Console.Error);
-                Environment.Exit(1);
                 return null;
             }
         }
@@ -83,15 +69,14 @@ namespace DotNetGB.WpfGui
 
         private void StartGui()
         {
-            _display.SetPreferredSize(new Size(160 * SCALE, 144 * SCALE));
+            _displayThread.Start();
+            _gameboyThread.Start();
+        }
 
-            _display.Title = $"DotNet GB: {_rom.Title}";
-            _display.Show();
-
-            _display.AddKeyListener(_controller);
-
-            new Thread(_display.Run).Start();
-            new Thread(_gameboy.Run).Start();
+        public void Stop()
+        {
+            _gameboy.Stop();
+            _display.Stop();
         }
     }
 }
