@@ -5,8 +5,21 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:DotNetGB.WpfGui"
         mc:Ignorable="d"
-        Title="MainWindow" Height="320" Width="288">
-    <Grid Background="black">
-        <Image x:Name="DisplayImage" Stretch="Uniform"></Image>
-    </Grid>
+        Title="DotNetGB">
+    <DockPanel Background="black">
+        <Menu DockPanel.Dock="Top" x:Name="MainMenu">
+            <MenuItem Header="_File">
+                <MenuItem Header="_Open" x:Name="MenuItemOpen" Click="MenuItemOpen_OnClick"></MenuItem>
+                <Separator />
+                <MenuItem Header="E_xit" x:Name="MenuItemExit" Click="MenuItemExit_OnClick"></MenuItem>
+            </MenuItem>
+            <MenuItem Header="_Audio">
+                <MenuItem Header="E_nabled" x:Name="MenuItemAudioEnabled" IsCheckable="true" IsChecked="true" Checked="MenuItemAudioEnabled_OnChecked" Unchecked="MenuItemAudioEnabled_OnUnchecked"></MenuItem>
+            </MenuItem>
+            <MenuItem Header="_Screen">
+                <MenuItem Header="_Full Screen" x:Name="MenuItemFullscreen" Click="MenuItemFullscreen_OnClick"></MenuItem>
+            </MenuItem>
+        </Menu>
+        <local:EmulatorDisplay x:Name="EmulatorDisplay"></local:EmulatorDisplay>
+    </DockPanel>
 </Window>

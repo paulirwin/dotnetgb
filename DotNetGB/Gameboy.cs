@@ -148,7 +148,7 @@ namespace DotNetGB
                     _display.WaitForRefresh();
                 }
                 //_console.IfPresent(Console.Tick);
-                _tickListeners.ForEach();
+                //_tickListeners.ForEach();
             }
         }
 
@@ -182,15 +182,15 @@ namespace DotNetGB
 
         public Gpu Gpu => _gpu;
 
-        public void RegisterTickListener(Action tickListener)
-        {
-            _tickListeners.Add(tickListener);
-        }
+        //public void RegisterTickListener(Action tickListener)
+        //{
+        //    _tickListeners.Add(tickListener);
+        //}
 
-        public void UnregisterTickListener(Action tickListener)
-        {
-            _tickListeners.Remove(tickListener);
-        }
+        //public void UnregisterTickListener(Action tickListener)
+        //{
+        //    _tickListeners.Remove(tickListener);
+        //}
 
         public Sound Sound => _sound;
     }

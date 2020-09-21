@@ -30,7 +30,7 @@ namespace DotNetGB.Hardware.Sounds
 
         private bool enabled;
 
-        private readonly bool[] overridenEnabled = { true, true, true, true };
+        //private readonly bool[] overridenEnabled = { true, true, true, true };
 
         public Sound(ISoundOutput output, bool gbc)
         {
@@ -59,10 +59,10 @@ namespace DotNetGB.Hardware.Sounds
             int right = 0;
             for (int i = 0; i < 4; i++)
             {
-                if (!overridenEnabled[i])
-                {
-                    continue;
-                }
+                //if (!overridenEnabled[i])
+                //{
+                //    continue;
+                //}
                 if ((selection & (1 << i + 4)) != 0)
                 {
                     left += channels[i];
@@ -84,17 +84,16 @@ namespace DotNetGB.Hardware.Sounds
 
         private IAddressSpace? GetAddressSpace(int address)
         {
-            foreach (AbstractSoundMode m in allModes)
-            {
-                if (m.Accepts(address))
-                {
-                    return m;
-                }
-            }
+            if (mode1.Accepts(address))
+                return mode1;
+            if (mode2.Accepts(address))
+                return mode2;
+            if (mode3.Accepts(address))
+                return mode3;
+            if (mode4.Accepts(address))
+                return mode4;
             if (r.Accepts(address))
-            {
                 return r;
-            }
             return null;
         }
 
@@ -147,10 +146,7 @@ namespace DotNetGB.Hardware.Sounds
                 }
 
                 var s = GetAddressSpace(address);
-                if (s == null)
-                {
-                    throw new ArgumentException();
-                }
+                System.Diagnostics.Debug.Assert(s != null, "Unknown address space");
                 s[address] = value;
             }
         }
@@ -158,10 +154,7 @@ namespace DotNetGB.Hardware.Sounds
         private int GetUnmaskedByte(int address)
         {
             var s = GetAddressSpace(address);
-            if (s == null)
-            {
-                throw new ArgumentException();
-            }
+            System.Diagnostics.Debug.Assert(s != null, "Unknown address space");
             return s[address];
         }
 
@@ -197,9 +190,9 @@ namespace DotNetGB.Hardware.Sounds
             }
         }
 
-        public void EnableChannel(int i, bool enabled)
-        {
-            overridenEnabled[i] = enabled;
-        }
+        //public void EnableChannel(int i, bool enabled)
+        //{
+        //    overridenEnabled[i] = enabled;
+        //}
     }
 }

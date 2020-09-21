@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace DotNetGB.Hardware
+﻿namespace DotNetGB.Hardware
 {
     public class Ram : IAddressSpace
     {
@@ -30,15 +28,7 @@ namespace DotNetGB.Hardware
 
         public int this[int address]
         {
-            get
-            {
-                int index = address - _offset;
-                if (index < 0 || index >= _space.Length)
-                {
-                    throw new ArgumentOutOfRangeException(nameof(address), "Address: " + address);
-                }
-                return _space[index];
-            }
+            get => _space[address - _offset];
             set => _space[address - _offset] = value;
         }
     }

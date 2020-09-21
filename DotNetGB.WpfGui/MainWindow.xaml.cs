@@ -1,174 +1,144 @@
 ﻿using System;
-using System.Threading;
 using System.Windows;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using DotNetGB.Hardware;
+using System.Windows.Input;
+using Microsoft.Win32;
 
 namespace DotNetGB.WpfGui
 {
-    public partial class MainWindow : IDisplay
+    public partial class MainWindow
     {
-        public const int DISPLAY_WIDTH = 160;
+        private Emulator? _emulator;
 
-        public const int DISPLAY_HEIGHT = 144;
+        private readonly WpfController _controller = new WpfController();
 
-        private const int STRIDE = DISPLAY_WIDTH * 3; // 3 bytes (24 bits) per pixel
-        
-        public static readonly int[] COLORS = {
-            0xe6f8da, 0x99c886, 0x437969, 0x051f2a
-        };
+        private readonly WpfSoundOutput _soundOutput = new WpfSoundOutput();
 
-        private readonly byte[] _pixels;
+        private GameboyOptions? _options;
 
-        private volatile bool _enabled;
+        private bool _isFullScreen;
 
-        private volatile bool _doStop;
-
-        private volatile bool _doRefresh;
-
-        private int _i;
-
-        private readonly Int32Rect _rect = new Int32Rect(0, 0, DISPLAY_WIDTH, DISPLAY_HEIGHT);
-
-        public MainWindow()
+        public MainWindow(string[] args)
         {
             InitializeComponent();
             Loaded += OnLoaded;
-            Closed += (sender, args) => Environment.Exit(0);
-
-            _pixels = new byte[DISPLAY_WIDTH * DISPLAY_HEIGHT * STRIDE];
-            Array.Fill(_pixels, (byte)0);
+            Closed += (s, e) => Environment.Exit(0);
+            
+            if (args.Length > 0)
+            {
+                _options = Emulator.ParseArgs(args);
+                LoadEmulator();
+            }
         }
-
-        public WriteableBitmap Display { get; } = new WriteableBitmap(DISPLAY_WIDTH, DISPLAY_HEIGHT, 96d, 96d, PixelFormats.Rgb24, null);
 
         private void OnLoaded(object sender, RoutedEventArgs e)
         {
-            DisplayImage.Source = Display;
-            DrawImage();
+            SetPreferredSize(new Size(320, 288));
+            AddKeyListener();
         }
 
-        public void SetPreferredSize(Size size)
+        private void SetPreferredSize(Size size)
         {
             Width = size.Width;
             Height = size.Height;
         }
 
-        public void PutDmgPixel(int color)
+        private bool IsFullScreen
         {
-            int c = COLORS[color];
-            byte r = (byte) (c >> 16);
-            byte g = (byte) ((c >> 8) & 0xff);
-            byte b = (byte) (c & 0xff);
-
-            _pixels[_i++] = r;
-            _pixels[_i++] = g;
-            _pixels[_i++] = b;
-        }
-
-        public void PutColorPixel(int gbcRgb)
-        {
-            byte r = (byte) ((gbcRgb >> 0) & 0x1f);
-            byte g = (byte) ((gbcRgb >> 5) & 0x1f);
-            byte b = (byte) ((gbcRgb >> 10) & 0x1f);
-
-            _pixels[_i++] = r;
-            _pixels[_i++] = g;
-            _pixels[_i++] = b;
-        }
-        
-        public void RequestRefresh()
-        {
-            _doRefresh = true;
-            lock (this)
+            get => _isFullScreen;
+            set
             {
-                Monitor.PulseAll(this);
-            }
-        }
-
-        public void WaitForRefresh()
-        {
-            while (_doRefresh)
-            {
-                lock (this)
+                if (value)
                 {
-                    try
-                    {
-                        Monitor.Wait(this, 1);
-                    }
-                    catch (ThreadInterruptedException)
-                    {
-                        break;
-                    }
+                    EnterFullScreen();
                 }
+                else
+                {
+                    ExitFullScreen();
+                }
+
+                _isFullScreen = value;
             }
         }
 
-        public void EnableLcd()
+        private void EnterFullScreen()
         {
-            _enabled = true;
+            WindowState = WindowState.Maximized;
+            WindowStyle = WindowStyle.None;
+            MainMenu.Visibility = Visibility.Collapsed;
         }
 
-        public void DisableLcd()
+        private void ExitFullScreen()
         {
-            _enabled = false;
+            WindowState = WindowState.Normal;
+            WindowStyle = WindowStyle.SingleBorderWindow;
+            MainMenu.Visibility = Visibility.Visible;
         }
 
-        public void AddKeyListener(WpfController controller)
+        private void AddKeyListener()
         {
             KeyDown += (sender, args) =>
             {
-                controller.ButtonPressed(args.Key);
+                _controller.ButtonPressed(args.Key);
             };
 
             KeyUp += (sender, args) =>
             {
-                controller.ButtonReleased(args.Key);
+                if (args.Key == Key.Escape && IsFullScreen)
+                {
+                    IsFullScreen = false;
+                    return;
+                }
+
+                _controller.ButtonReleased(args.Key);
             };
         }
 
-        public void Run()
+        private void MenuItemExit_OnClick(object sender, RoutedEventArgs e) => Environment.Exit(0);
+
+        private void MenuItemOpen_OnClick(object sender, RoutedEventArgs e)
         {
-            _doStop = false;
-            _doRefresh = false;
-            _enabled = true;
-
-            while (!_doStop)
+            var dialog = new OpenFileDialog
             {
-                lock (this)
-                {
-                    try
-                    {
-                        Monitor.Wait(this, 1);
-                    }
-                    catch (ThreadInterruptedException)
-                    {
-                        break;
-                    }
-                }
+                Multiselect = false,
+                Filter = "ROM Files (*.gb,*.gbc;*.rom)|*.gb;*.gbc;*.rom|All Files (*.*)|*.*",
+            };
 
-                if (_doRefresh)
-                {
-                    Dispatcher.InvokeAsync(DrawImage);
+            if (!dialog.ShowDialog().GetValueOrDefault())
+                return;
 
-                    lock (this)
-                    {
-                        _i = 0;
-                        _doRefresh = false;
-                        Monitor.PulseAll(this);
-                    }
-                }
-            }
+            _emulator?.Stop();
+
+            _options = _options == null ? new GameboyOptions(dialog.FileName) : _options.WithRomFile(dialog.FileName);
+            LoadEmulator();
         }
 
-        private void DrawImage()
+        private void LoadEmulator()
         {
-            Display.Lock();
+            if (_options == null)
+                return;
 
-            Display.WritePixels(_rect, _pixels, STRIDE, 0);
+            _emulator = new Emulator(_options, EmulatorDisplay, _controller, _soundOutput);
 
-            Display.Unlock();
+            Title = $"DotNetGB: {_emulator.Rom.Title}";
+
+            _emulator.Run();
+        }
+
+        private void MenuItemAudioEnabled_OnChecked(object sender, RoutedEventArgs e)
+        {
+            _soundOutput.Enabled = true;
+            _soundOutput.Start();
+        }
+
+        private void MenuItemAudioEnabled_OnUnchecked(object sender, RoutedEventArgs e)
+        {
+            _soundOutput.Enabled = false;
+            _soundOutput.Stop();
+        }
+
+        private void MenuItemFullscreen_OnClick(object sender, RoutedEventArgs e)
+        {
+            IsFullScreen = true;
         }
     }
 }
