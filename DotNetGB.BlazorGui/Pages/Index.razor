@@ -1,0 +1,15 @@
+﻿@functions {
+    private void OnInputFileChange(InputFileChangeEventArgs e)
+    {
+        var file = e.File;
+
+        using var stream = file.OpenReadStream();
+
+
+    }
+}
+@page "/"
+
+<InputFile OnChange="OnInputFileChange"></InputFile>
+
+<canvas id="display"></canvas>

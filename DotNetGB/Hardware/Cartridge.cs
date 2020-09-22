@@ -44,9 +44,18 @@ namespace DotNetGB.Hardware
         private int _dmgBootstrap;
 
         public Cartridge(GameboyOptions options)
+            : this(options, LoadFile(options.RomFile))
         {
-            FileInfo file = options.RomFile;
-            int[] rom = LoadFile(file);
+        }
+
+        public Cartridge(GameboyOptions options, Stream romStream)
+            : this(options, Load(romStream))
+        {
+        }
+
+        public Cartridge(GameboyOptions options, int[] rom)
+        {
+            FileInfo? file = options.RomFile;
             var type = CartridgeTypeExtensions.GetById(rom[0x0147]);
             _title = GetTitle(rom);
             System.Diagnostics.Debug.WriteLine("Cartridge {0}, type: {1}", _title, type);
@@ -61,7 +70,7 @@ namespace DotNetGB.Hardware
             System.Diagnostics.Debug.WriteLine("ROM banks: {0}, RAM banks: {1}", romBanks, ramBanks);
 
             IBattery battery = new NullBattery();
-            if (type.IsBattery() && options.SupportBatterySaves)
+            if (type.IsBattery() && options.SupportBatterySaves && file != null)
             {
                 battery = new FileBattery(file.Directory, Path.GetFileNameWithoutExtension(file.Name));
             }

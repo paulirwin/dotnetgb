@@ -6,6 +6,10 @@ namespace DotNetGB
 {
     public class GameboyOptions
     {
+        public GameboyOptions()
+        {
+        }
+
         public GameboyOptions(string romFile)
             : this(new FileInfo(romFile))
         {
@@ -31,7 +35,7 @@ namespace DotNetGB
             Headless = param.Contains("headless");
         }
 
-        public FileInfo RomFile { get; }
+        public FileInfo? RomFile { get; }
 
         public bool ForceDmg { get; set; }
 

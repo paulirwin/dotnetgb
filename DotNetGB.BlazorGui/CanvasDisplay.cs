@@ -1,19 +1,21 @@
-﻿using System;
-using System.Threading;
-using System.Windows;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
+﻿using System.Threading;
 using DotNetGB.Hardware;
+using Microsoft.AspNetCore.Components;
+using Microsoft.JSInterop;
 
-namespace DotNetGB.WpfGui
+namespace DotNetGB.BlazorGui
 {
-    public partial class EmulatorDisplay : IDisplay
+    public class CanvasDisplay : IDisplay
     {
+        private readonly Dispatcher _dispatcher;
+        
+        private readonly IJSRuntime _jsRuntime;
+
         public const int DISPLAY_WIDTH = 160;
 
         public const int DISPLAY_HEIGHT = 144;
 
-        private const int STRIDE = DISPLAY_WIDTH * 3; // 3 bytes (24 bits) per pixel
+        private const int STRIDE = DISPLAY_WIDTH * 4; // 4 bytes (32 bits) per pixel - RGBA
 
         public static readonly int[] COLORS = {
             0xe6f8da, 0x99c886, 0x437969, 0x051f2a
@@ -26,27 +28,16 @@ namespace DotNetGB.WpfGui
         private volatile bool _doStop;
 
         private volatile bool _doRefresh;
-
+        
         private int _i;
-
-        private readonly Int32Rect _rect = new Int32Rect(0, 0, DISPLAY_WIDTH, DISPLAY_HEIGHT);
-
-        public EmulatorDisplay()
+        
+        public CanvasDisplay(Dispatcher dispatcher, IJSRuntime jsRuntime)
         {
-            InitializeComponent();
-            Loaded += OnLoaded;
-
+            _dispatcher = dispatcher;
+            _jsRuntime = jsRuntime;
             _pixels = new byte[DISPLAY_WIDTH * DISPLAY_HEIGHT * STRIDE];
         }
 
-        public WriteableBitmap Display { get; } = new WriteableBitmap(DISPLAY_WIDTH, DISPLAY_HEIGHT, 96d, 96d, PixelFormats.Rgb24, null);
-
-        private void OnLoaded(object sender, RoutedEventArgs e)
-        {
-            DisplayImage.Source = Display;
-            DrawImage();
-        }
-        
         public void PutDmgPixel(int color)
         {
             int c = COLORS[color];
@@ -57,6 +48,7 @@ namespace DotNetGB.WpfGui
             _pixels[_i++] = r;
             _pixels[_i++] = g;
             _pixels[_i++] = b;
+            _pixels[_i++] = 255; // alpha
         }
 
         public void PutColorPixel(int gbcRgb)
@@ -68,6 +60,7 @@ namespace DotNetGB.WpfGui
             _pixels[_i++] = r;
             _pixels[_i++] = g;
             _pixels[_i++] = b;
+            _pixels[_i++] = 255; // alpha
         }
 
         public void RequestRefresh()
@@ -106,13 +99,13 @@ namespace DotNetGB.WpfGui
         {
             _enabled = false;
         }
-        
+
         public void Run()
         {
             _doStop = false;
             _doRefresh = false;
             _enabled = true;
-
+            
             while (!_doStop)
             {
                 lock (this)
@@ -129,7 +122,7 @@ namespace DotNetGB.WpfGui
 
                 if (_doRefresh)
                 {
-                    Dispatcher.InvokeAsync(DrawImage);
+                    _dispatcher.InvokeAsync(DrawImage);
 
                     lock (this)
                     {
@@ -148,11 +141,7 @@ namespace DotNetGB.WpfGui
 
         private void DrawImage()
         {
-            Display.Lock();
-
-            Display.WritePixels(_rect, _pixels, STRIDE, 0);
-
-            Display.Unlock();
+            _jsRuntime.InvokeVoidAsync("drawCanvasPixels", _pixels);
         }
     }
 }
